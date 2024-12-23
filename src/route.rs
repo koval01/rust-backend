@@ -2,8 +2,12 @@ use axum::{
     middleware,
     routing::{get, post},
     Router,
+    http::StatusCode,
+    response::IntoResponse,
+    Json,
 };
 use tower::ServiceBuilder;
+use serde_json::json;
 
 use crate::{
     handler::{
@@ -14,11 +18,26 @@ use crate::{
     model,
 };
 
+// Handler for unknown routes
+async fn handler_404() -> impl IntoResponse {
+    (
+        StatusCode::NOT_FOUND,
+        Json(json!({
+            "status": "error",
+            "message": "route not found"
+        }))
+    )
+}
+
 pub fn create_router() -> Router {
     let db = model::todo_db();
 
-    let app = Router::new()
-        .route("/api/health", get(health_checker_handler))
+    // Routes without middleware
+    let public_routes = Router::new()
+        .route("/api/health", get(health_checker_handler));
+
+    // Routes with middleware
+    let protected_routes = Router::new()
         .route(
             "/api/todos",
             post(create_todo_handler).get(todos_list_handler),
@@ -29,7 +48,12 @@ pub fn create_router() -> Router {
                 .patch(edit_todo_handler)
                 .delete(delete_todo_handler),
         )
-        .with_state(db);
+        .layer(ServiceBuilder::new().layer(middleware::from_fn(validate_middleware)));
 
-    app.layer(ServiceBuilder::new().layer(middleware::from_fn(validate_middleware)))
+    // Merge routes and add shared state and fallback
+    Router::new()
+        .merge(public_routes)
+        .merge(protected_routes)
+        .fallback(handler_404)
+        .with_state(db)
 }
