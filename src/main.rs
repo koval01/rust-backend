@@ -4,6 +4,7 @@ mod response;
 mod route;
 mod validator;
 mod middleware;
+mod error;
 
 use axum::http::{
     header::{ACCEPT, AUTHORIZATION, CONTENT_TYPE},

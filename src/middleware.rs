@@ -1,27 +1,28 @@
 use axum::{
     body::Body,
-    http::{Request, StatusCode},
+    http::{Request},
     middleware::Next,
-    response::Response,
+    response::{IntoResponse},
 };
+use crate::error::ApiError;
 
 pub async fn validate_middleware(
     req: Request<Body>,
     next: Next,
-) -> Result<Response, StatusCode> {
+) -> Result<impl IntoResponse, ApiError> {
     let init_data = req
         .headers()
         .get("X-InitData")
         .and_then(|value| value.to_str().ok())
-        .ok_or(StatusCode::BAD_REQUEST)?;
+        .ok_or(ApiError::BadRequest)?;
 
     let decoded_init_data = urlencoding::decode(init_data)
-        .map_err(|_| StatusCode::BAD_REQUEST)?
+        .map_err(|_| ApiError::BadRequest)?
         .into_owned();
 
     match crate::validator::validate_init_data(&decoded_init_data) {
         Ok(true) => Ok(next.run(req).await),
-        Ok(false) => Err(StatusCode::UNAUTHORIZED),
-        Err(_) => Err(StatusCode::BAD_REQUEST),
+        Ok(false) => Err(ApiError::Unauthorized),
+        Err(_) => Err(ApiError::BadRequest),
     }
 }

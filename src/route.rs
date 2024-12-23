@@ -2,12 +2,9 @@ use axum::{
     middleware,
     routing::{get, post},
     Router,
-    http::StatusCode,
     response::IntoResponse,
-    Json,
 };
 use tower::ServiceBuilder;
-use serde_json::json;
 
 use crate::{
     handler::{
@@ -16,18 +13,8 @@ use crate::{
     },
     middleware::validate_middleware,
     model,
+    error::ApiError,
 };
-
-// Handler for unknown routes
-async fn handler_404() -> impl IntoResponse {
-    (
-        StatusCode::NOT_FOUND,
-        Json(json!({
-            "status": "error",
-            "message": "route not found"
-        }))
-    )
-}
 
 pub fn create_router() -> Router {
     let db = model::todo_db();
@@ -54,6 +41,6 @@ pub fn create_router() -> Router {
     Router::new()
         .merge(public_routes)
         .merge(protected_routes)
-        .fallback(handler_404)
+        .fallback(|| async { ApiError::NotFound.into_response() })
         .with_state(db)
 }

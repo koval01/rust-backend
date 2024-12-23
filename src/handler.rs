@@ -2,13 +2,14 @@ use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
     response::IntoResponse,
-    Json,
+    Json
 };
 use uuid::Uuid;
 
 use crate::{
     model::{QueryOptions, Todo, UpdateTodoSchema, DB},
     response::{SingleTodoResponse, TodoData, TodoListResponse},
+    error::ApiError,
 };
 
 pub async fn health_checker_handler() -> impl IntoResponse {
@@ -25,7 +26,7 @@ pub async fn health_checker_handler() -> impl IntoResponse {
 pub async fn todos_list_handler(
     opts: Option<Query<QueryOptions>>,
     State(db): State<DB>,
-) -> impl IntoResponse {
+) -> Result<impl IntoResponse, ApiError> {
     let todos = db.lock().await;
 
     let Query(opts) = opts.unwrap_or_default();
@@ -41,21 +42,17 @@ pub async fn todos_list_handler(
         todos,
     };
 
-    Json(json_response)
+    Ok(Json(json_response))
 }
 
 pub async fn create_todo_handler(
     State(db): State<DB>,
     Json(mut body): Json<Todo>,
-) -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)> {
+) -> Result<impl IntoResponse, ApiError> {
     let mut vec = db.lock().await;
 
-    if let Some(todo) = vec.iter().find(|todo| todo.title == body.title) {
-        let error_response = serde_json::json!({
-            "status": "fail",
-            "message": format!("Todo with title: '{}' already exists", todo.title),
-        });
-        return Err((StatusCode::CONFLICT, Json(error_response)));
+    if let Some(_todo) = vec.iter().find(|todo| todo.title == body.title) {
+        return Err(ApiError::Conflict);
     }
 
     let uuid_id = Uuid::new_v4();
@@ -81,7 +78,7 @@ pub async fn create_todo_handler(
 pub async fn get_todo_handler(
     Path(id): Path<Uuid>,
     State(db): State<DB>,
-) -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)> {
+) -> Result<impl IntoResponse, ApiError> {
     let id = id.to_string();
     let vec = db.lock().await;
 
@@ -93,18 +90,14 @@ pub async fn get_todo_handler(
         return Ok((StatusCode::OK, Json(json_response)));
     }
 
-    let error_response = serde_json::json!({
-        "status": "fail",
-        "message": format!("Todo with ID: {} not found", id)
-    });
-    Err((StatusCode::NOT_FOUND, Json(error_response)))
+    Err(ApiError::NotFound)
 }
 
 pub async fn edit_todo_handler(
     Path(id): Path<Uuid>,
     State(db): State<DB>,
     Json(body): Json<UpdateTodoSchema>,
-) -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)> {
+) -> Result<impl IntoResponse, ApiError> {
     let id = id.to_string();
     let mut vec = db.lock().await;
 
@@ -143,19 +136,14 @@ pub async fn edit_todo_handler(
         };
         Ok((StatusCode::OK, Json(json_response)))
     } else {
-        let error_response = serde_json::json!({
-            "status": "fail",
-            "message": format!("Todo with ID: {} not found", id)
-        });
-
-        Err((StatusCode::NOT_FOUND, Json(error_response)))
+        Err(ApiError::NotFound)
     }
 }
 
 pub async fn delete_todo_handler(
     Path(id): Path<Uuid>,
     State(db): State<DB>,
-) -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)> {
+) -> Result<impl IntoResponse, ApiError> {
     let id = id.to_string();
     let mut vec = db.lock().await;
 
@@ -164,10 +152,5 @@ pub async fn delete_todo_handler(
         return Ok((StatusCode::NO_CONTENT, Json("")));
     }
 
-    let error_response = serde_json::json!({
-        "status": "fail",
-        "message": format!("Todo with ID: {} not found", id)
-    });
-
-    Err((StatusCode::NOT_FOUND, Json(error_response)))
+    Err(ApiError::NotFound)
 }
