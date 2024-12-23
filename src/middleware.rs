@@ -7,7 +7,7 @@ use axum::{
 use crate::error::ApiError;
 
 pub async fn validate_middleware(
-    req: Request<Body>,
+    mut req: Request<Body>,
     next: Next,
 ) -> Result<impl IntoResponse, ApiError> {
     let init_data = req
@@ -21,7 +21,10 @@ pub async fn validate_middleware(
         .into_owned();
 
     match crate::validator::validate_init_data(&decoded_init_data) {
-        Ok(true) => Ok(next.run(req).await),
+        Ok(true) => {
+            req.extensions_mut().insert(decoded_init_data);
+            Ok(next.run(req).await)
+        },
         Ok(false) => Err(ApiError::Unauthorized),
         Err(_) => Err(ApiError::BadRequest),
     }

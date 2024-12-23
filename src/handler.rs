@@ -26,15 +26,10 @@ pub async fn health_checker_handler() -> impl IntoResponse {
 }
 
 pub async fn user_handler(req: Request<Body>) -> Result<impl IntoResponse, ApiError> {
-    let init_data = req
-        .headers()
-        .get("X-InitData")
-        .and_then(|value| value.to_str().ok())
+    let decoded_init_data = req
+        .extensions()
+        .get::<String>()
         .ok_or(ApiError::BadRequest)?;
-
-    let decoded_init_data = urlencoding::decode(init_data)
-        .map_err(|_| ApiError::BadRequest)?
-        .into_owned();
 
     let mut query_pairs = form_urlencoded::parse(decoded_init_data.as_bytes());
 
