@@ -10,7 +10,6 @@ pub enum ApiError {
     BadRequest,
     Unauthorized,
     NotFound,
-    Conflict,
 }
 
 impl ApiError {
@@ -19,7 +18,6 @@ impl ApiError {
             ApiError::BadRequest => StatusCode::BAD_REQUEST,
             ApiError::Unauthorized => StatusCode::UNAUTHORIZED,
             ApiError::NotFound => StatusCode::NOT_FOUND,
-            ApiError::Conflict => StatusCode::CONFLICT,
         }
     }
 
@@ -28,7 +26,6 @@ impl ApiError {
             ApiError::BadRequest => "bad request".to_string(),
             ApiError::Unauthorized => "unauthorised".to_string(),
             ApiError::NotFound => "not found".to_string(),
-            ApiError::Conflict => "conflict".to_string(),
         }
     }
 }
