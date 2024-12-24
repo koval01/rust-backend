@@ -18,12 +18,12 @@ use crate::{
 pub fn create_router() -> Router {
     // Routes without middleware
     let public_routes = Router::new()
-        .route("/api/health", get(health_checker_handler));
+        .route("/api/v1/health", get(health_checker_handler));
 
     // Routes with middleware
     let protected_routes = Router::new()
         .route(
-            "/api/user",
+            "/api/v1/user",
             get(user_handler_get),
         )
         .layer(
