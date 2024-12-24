@@ -20,7 +20,7 @@ pub async fn validate_middleware(
         .map_err(|_| ApiError::BadRequest)?
         .into_owned();
 
-    match crate::validator::validate_init_data(&decoded_init_data) {
+    match crate::util::validator::validate_init_data(&decoded_init_data) {
         Ok(true) => {
             req.extensions_mut().insert(decoded_init_data);
             Ok(next.run(req).await)

@@ -7,7 +7,7 @@ use axum::{
 use tower::ServiceBuilder;
 
 use crate::{
-    handlers::{health_checker_handler, user_handler},
+    handler::{health_checker_handler, user_handler},
     middleware::validate_middleware,
     error::ApiError,
 };

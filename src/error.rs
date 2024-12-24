@@ -3,7 +3,7 @@ use axum::{
     response::IntoResponse,
     Json,
 };
-use serde_json::json;
+use crate::response::ApiResponse;
 
 #[derive(Debug)]
 pub enum ApiError {
@@ -33,8 +33,8 @@ impl ApiError {
 impl IntoResponse for ApiError {
     fn into_response(self) -> axum::response::Response {
         let status = self.status_code();
-        let code = status.as_u16();
         let message = self.message();
-        (status, Json(json!({ "status": "error", "code": code, "message": message }))).into_response()
+        let response = ApiResponse::<()>::error(&message, status);
+        (status, Json(response)).into_response()
     }
 }
