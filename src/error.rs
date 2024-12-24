@@ -3,6 +3,7 @@ use axum::{
     response::IntoResponse,
     Json,
 };
+use prisma_client_rust::QueryError;
 use crate::response::ApiResponse;
 
 #[derive(Debug)]
@@ -10,6 +11,7 @@ pub enum ApiError {
     BadRequest,
     Unauthorized,
     NotFound,
+    Database(QueryError),
 }
 
 impl ApiError {
@@ -18,6 +20,7 @@ impl ApiError {
             ApiError::BadRequest => StatusCode::BAD_REQUEST,
             ApiError::Unauthorized => StatusCode::UNAUTHORIZED,
             ApiError::NotFound => StatusCode::NOT_FOUND,
+            ApiError::Database(_) => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }
 
@@ -26,7 +29,14 @@ impl ApiError {
             ApiError::BadRequest => "bad request".to_string(),
             ApiError::Unauthorized => "unauthorised".to_string(),
             ApiError::NotFound => "not found".to_string(),
+            ApiError::Database(error) => format!("database error: {}", error),
         }
+    }
+}
+
+impl From<QueryError> for ApiError {
+    fn from(error: QueryError) -> Self {
+        ApiError::Database(error)
     }
 }
 

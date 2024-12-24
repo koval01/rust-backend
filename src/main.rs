@@ -7,10 +7,18 @@ mod model;
 mod response;
 mod util;
 
+#[allow(warnings, unused)]
+mod prisma;
+
+use prisma::PrismaClient;
+
+use std::sync::Arc;
+
 use axum::http::{
     header::{ACCEPT, AUTHORIZATION, CONTENT_TYPE},
     HeaderValue, Method,
 };
+use axum::extract::{ Extension };
 use route::create_router;
 use tower_http::cors::CorsLayer;
 
@@ -22,7 +30,9 @@ async fn main() {
         .allow_credentials(true)
         .allow_headers([AUTHORIZATION, ACCEPT, CONTENT_TYPE]);
 
-    let app = create_router().layer(cors);
+    let prisma_client = Arc::new(PrismaClient::_builder().build().await.unwrap());
+
+    let app = create_router().layer(cors).layer(Extension(prisma_client));
 
     println!("🚀 Server started successfully");
     let listener = tokio::net::TcpListener::bind("0.0.0.0:8000").await.unwrap();

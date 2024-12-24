@@ -7,13 +7,15 @@ use axum::{
 use tower::ServiceBuilder;
 
 use crate::{
-    handler::{health_checker_handler, user_handler},
-    middleware::validate_middleware,
+    handler::{
+        health_checker_handler,
+        user_handler_get,
+    },
+    middleware::{validate_middleware, sync_user_middleware},
     error::ApiError,
 };
 
 pub fn create_router() -> Router {
-
     // Routes without middleware
     let public_routes = Router::new()
         .route("/api/health", get(health_checker_handler));
@@ -22,9 +24,13 @@ pub fn create_router() -> Router {
     let protected_routes = Router::new()
         .route(
             "/api/user",
-            get(user_handler),
+            get(user_handler_get),
         )
-        .layer(ServiceBuilder::new().layer(middleware::from_fn(validate_middleware)));
+        .layer(
+            ServiceBuilder::new()
+                .layer(middleware::from_fn(validate_middleware))
+                .layer(middleware::from_fn(sync_user_middleware))
+        );
 
     // Merge routes and add shared state and fallback
     Router::new()
