@@ -1,17 +1,14 @@
 use axum::{
     response::IntoResponse,
-    body::Body,
-    http::{Request, StatusCode},
+    http::StatusCode,
     Json
 };
-
-use serde_json::{from_str};
-use url::{form_urlencoded};
 
 use crate::{
     error::ApiError,
     model::{User},
     response::UserResponse,
+    extractor::InitData,
 };
 
 pub async fn health_checker_handler() -> impl IntoResponse {
@@ -25,19 +22,9 @@ pub async fn health_checker_handler() -> impl IntoResponse {
     Json(json_response)
 }
 
-pub async fn user_handler(req: Request<Body>) -> Result<impl IntoResponse, ApiError> {
-    let decoded_init_data = req
-        .extensions()
-        .get::<String>()
-        .ok_or(ApiError::BadRequest)?;
-
-    let mut query_pairs = form_urlencoded::parse(decoded_init_data.as_bytes());
-
-    let user_query = query_pairs.find(|(key, _)| key == "user");
-    let user_query = user_query.ok_or(ApiError::BadRequest)?.1.to_string();
-
-    let user: User = from_str(&user_query).map_err(|_| ApiError::BadRequest)?;
-
+pub async fn user_handler(
+    InitData(user): InitData<User>,
+) -> Result<impl IntoResponse, ApiError> {
     let json_response = UserResponse {
         status: "success".to_string(),
         user,
