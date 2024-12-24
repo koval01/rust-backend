@@ -1,6 +1,7 @@
 use hmac::{Hmac, Mac};
 use sha2::Sha256;
 use std::env;
+use std::time::{SystemTime, UNIX_EPOCH};
 use lazy_static::lazy_static;
 use ahash::AHashMap;
 
@@ -25,7 +26,7 @@ thread_local! {
 }
 
 pub fn validate_init_data(init_data: &str) -> Result<bool, &'static str> {
-    if init_data.len() > 768 {
+    if init_data.len() > 1024 {
         return Err("Input data too long");
     }
 
@@ -48,6 +49,21 @@ pub fn validate_init_data(init_data: &str) -> Result<bool, &'static str> {
     }
 
     let received_hash = received_hash.ok_or("Missing 'hash' parameter")?;
+
+    let auth_date = params
+        .get("auth_date")
+        .ok_or("Missing 'auth_date' parameter")?
+        .parse::<u64>()
+        .map_err(|_| "Invalid 'auth_date' value")?;
+
+    let current_time = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map_err(|_| "System time is before UNIX epoch")?
+        .as_secs();
+
+    if current_time > auth_date + 3600 {
+        return Err("auth_date expired");
+    }
 
     PAIRS_BUF.with(|buf| {
         let mut pairs = buf.borrow_mut();
