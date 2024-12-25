@@ -34,10 +34,10 @@ pub async fn sync_user_middleware(
                     init_user.first_name,
                     init_user.language_code,
                     init_user.allows_write_to_pm,
-                    init_user.photo_url,
                     vec![
                         user::last_name::set(init_user.last_name),
                         user::username::set(init_user.username),
+                        user::photo_url::set(init_user.photo_url),
                     ],
                 )
                 .exec()

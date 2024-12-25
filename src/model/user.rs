@@ -8,5 +8,5 @@ pub struct User {
     pub username: Option<String>,
     pub language_code: String,
     pub allows_write_to_pm: bool,
-    pub photo_url: String,
+    pub photo_url: Option<String>,
 }

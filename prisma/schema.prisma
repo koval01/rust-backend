@@ -15,5 +15,5 @@ model User {
   username           String?
   language_code      String
   allows_write_to_pm Boolean
-  photo_url          String
+  photo_url          String?
 }
