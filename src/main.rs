@@ -45,9 +45,9 @@ async fn main() {
     let redis_manager = RedisConnectionManager::new(redis_url).unwrap();
     let redis_pool = bb8::Pool::builder()
         .max_size((num_cpus::get() * 10) as u32) // Увеличиваем размер пула
-        .min_idle((num_cpus::get() * 2) as u32)
+        .min_idle((num_cpus::get() * 2 + 1) as u32)
         .max_lifetime(None)
-        .connection_timeout(Duration::from_millis(100))
+        .connection_timeout(Duration::from_millis(1000))
         .idle_timeout(Some(Duration::from_secs(60)))
         .build(redis_manager)
         .await
