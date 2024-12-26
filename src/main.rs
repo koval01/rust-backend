@@ -8,30 +8,52 @@ mod response;
 mod util;
 
 use std::env;
+use std::sync::Arc;
+use std::time::Duration;
+
 use bb8_redis::RedisConnectionManager;
 use bb8_redis::bb8;
 
+use redis::AsyncCommands;
+
 #[allow(warnings, unused)]
 mod prisma;
-
 use prisma::PrismaClient;
 
-use std::sync::Arc;
-use std::time::Duration;
 use axum::http::{
     header::{ACCEPT, AUTHORIZATION, CONTENT_TYPE},
     HeaderValue, Method,
 };
 use axum::extract::{ Extension };
-use redis::AsyncCommands;
-use tower::ServiceBuilder;
 use route::create_router;
-use tower_http::cors::CorsLayer;
+
+use tower::ServiceBuilder;
+use tower_http::{
+    cors::CorsLayer,
+    trace::TraceLayer
+};
+
+use sentry::{ClientOptions, IntoDsn};
+use sentry_tower::NewSentryLayer;
 use tracing::info;
+
+use crate::{
+    middleware::request_id_middleware
+};
 
 #[tokio::main]
 async fn main() {
     tracing_subscriber::fmt::init();
+
+    let _dsn = env::var("SENTRY_DSN").unwrap_or_else(|_| "".to_string());
+    let _guard = sentry::init((
+        _dsn.into_dsn().unwrap(),
+        ClientOptions {
+            release: sentry::release_name!(),
+            traces_sample_rate: 0.2,
+            ..Default::default()
+        },
+    ));
 
     let cors_host = env::var("CORS_HOST").unwrap_or_else(|_| "http://localhost:3000".to_string());
 
@@ -61,6 +83,9 @@ async fn main() {
     let prisma_client = Arc::new(PrismaClient::_builder().build().await.unwrap());
 
     let middleware_stack = ServiceBuilder::new()
+        .layer(NewSentryLayer::new_from_top())
+        .layer(TraceLayer::new_for_http())
+        .layer(axum::middleware::from_fn(request_id_middleware))
         .layer(cors)
         .layer(tower::limit::ConcurrencyLimitLayer::new(1000))
         .into_inner();
