@@ -12,8 +12,11 @@ model User {
   id                 BigInt   @id
   first_name         String
   last_name          String?
-  username           String?
+  username           String?  @unique
   language_code      String
   allows_write_to_pm Boolean
   photo_url          String?
+
+  @@index([username])
+  @@index([id])
 }
