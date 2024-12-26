@@ -4,6 +4,8 @@ use axum::{
     Router,
     response::IntoResponse,
 };
+use bb8::Pool;
+use bb8_redis::RedisConnectionManager;
 use tower::ServiceBuilder;
 
 use crate::{
@@ -15,7 +17,7 @@ use crate::{
     error::ApiError,
 };
 
-pub fn create_router() -> Router {
+pub fn create_router() -> Router<Pool<RedisConnectionManager>> {
     // Routes without middleware
     let public_routes = Router::new()
         .route("/api/v1/health", get(health_checker_handler));

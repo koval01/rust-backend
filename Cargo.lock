@@ -81,6 +81,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "34ac096ce696dc2fcabef30516bb13c0a68a11d30131d3df6f04711467681b04"
 
 [[package]]
+name = "arc-swap"
+version = "1.7.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "69f7f8c3906b62b754cd5326047894316021dcfe5a194c8ea52bdd94934a3457"
+
+[[package]]
 name = "arrayvec"
 version = "0.7.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -246,6 +252,27 @@ name = "base64"
 version = "0.21.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9d297deb1925b89f2ccc13d7635fa0714f12c87adce1c75356b39ca9b7178567"
+
+[[package]]
+name = "bb8"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "212d8b8e1a22743d9241575c6ba822cf9c8fef34771c86ab7e477a4fbfd254e5"
+dependencies = [
+ "futures-util",
+ "parking_lot 0.12.3",
+ "tokio",
+]
+
+[[package]]
+name = "bb8-redis"
+version = "0.18.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8416aa3639520757fd0ed659c8c12f7cd9f0ed638fa0cdd52a13d3b19946df2a"
+dependencies = [
+ "bb8",
+ "redis",
+]
 
 [[package]]
 name = "bigdecimal"
@@ -512,6 +539,20 @@ dependencies = [
  "either",
  "memchr",
  "unreachable",
+]
+
+[[package]]
+name = "combine"
+version = "4.6.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ba5a308b75df32fe02788e748662718f03fde005016435c444eea572398219fd"
+dependencies = [
+ "bytes",
+ "futures-core",
+ "memchr",
+ "pin-project-lite",
+ "tokio",
+ "tokio-util 0.7.13",
 ]
 
 [[package]]
@@ -1299,7 +1340,7 @@ name = "graphql-parser"
 version = "0.3.0"
 source = "git+https://github.com/prisma/graphql-parser#6a3f58bd879065588e710cb02b5bd30c1ce182c3"
 dependencies = [
- "combine",
+ "combine 3.8.1",
  "indexmap 1.9.3",
  "thiserror 1.0.69",
 ]
@@ -1807,6 +1848,15 @@ name = "itertools"
 version = "0.10.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b0fd2260e829bddf4cb6ea802289de2f86d6a7a690192fbe91b3f46e0f2c8473"
+dependencies = [
+ "either",
+]
+
+[[package]]
+name = "itertools"
+version = "0.13.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "413ee7dfc52ee1a4949ceeb7dbc8a33f2d6c088194d9f922fb8318faf1f01186"
 dependencies = [
  "either",
 ]
@@ -2408,7 +2458,7 @@ dependencies = [
  "cuid",
  "futures",
  "indexmap 1.9.3",
- "itertools",
+ "itertools 0.10.5",
  "mongodb",
  "mongodb-client",
  "prisma-models",
@@ -3131,7 +3181,7 @@ source = "git+https://github.com/Brendonovich/prisma-engines?tag=pcr-0.6.10#c4ae
 dependencies = [
  "bigdecimal",
  "chrono",
- "itertools",
+ "itertools 0.10.5",
  "once_cell",
  "prisma-value",
  "psl",
@@ -3193,7 +3243,7 @@ dependencies = [
  "diagnostics",
  "enumflags2",
  "indoc",
- "itertools",
+ "itertools 0.10.5",
  "lsp-types",
  "once_cell",
  "parser-database",
@@ -3291,7 +3341,7 @@ dependencies = [
  "chrono",
  "futures",
  "indexmap 1.9.3",
- "itertools",
+ "itertools 0.10.5",
  "prisma-models",
  "prisma-value",
  "serde",
@@ -3316,7 +3366,7 @@ dependencies = [
  "enumflags2",
  "futures",
  "indexmap 1.9.3",
- "itertools",
+ "itertools 0.10.5",
  "lazy_static",
  "lru",
  "mongodb-client",
@@ -3476,6 +3526,32 @@ dependencies = [
 ]
 
 [[package]]
+name = "redis"
+version = "0.27.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "09d8f99a4090c89cc489a94833c901ead69bfbf3877b4867d5482e321ee875bc"
+dependencies = [
+ "arc-swap",
+ "async-trait",
+ "bytes",
+ "combine 4.6.7",
+ "futures-util",
+ "itertools 0.13.0",
+ "itoa",
+ "native-tls",
+ "num-bigint",
+ "percent-encoding",
+ "pin-project-lite",
+ "ryu",
+ "sha1_smol",
+ "socket2 0.5.8",
+ "tokio",
+ "tokio-native-tls 0.3.1",
+ "tokio-util 0.7.13",
+ "url",
+]
+
+[[package]]
 name = "redox_syscall"
 version = "0.2.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3553,7 +3629,7 @@ dependencies = [
  "futures",
  "graphql-parser",
  "indexmap 1.9.3",
- "itertools",
+ "itertools 0.10.5",
  "psl",
  "query-core",
  "serde",
@@ -3826,7 +3902,7 @@ name = "schema-builder"
 version = "0.1.0"
 source = "git+https://github.com/Brendonovich/prisma-engines?tag=pcr-0.6.10#c4aeef82dbae310e974d6122160c7e3b5fb6df53"
 dependencies = [
- "itertools",
+ "itertools 0.10.5",
  "lazy_static",
  "once_cell",
  "prisma-models",
@@ -4030,6 +4106,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "sha1_smol"
+version = "1.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bbfa15b3dddfee50a0fff136974b3e1bde555604ba463834a7eb7deb6417705d"
+
+[[package]]
 name = "sha2"
 version = "0.9.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4213,7 +4295,7 @@ dependencies = [
  "chrono",
  "cuid",
  "futures",
- "itertools",
+ "itertools 0.10.5",
  "once_cell",
  "opentelemetry",
  "prisma-models",
@@ -4556,11 +4638,14 @@ version = "0.1.0"
 dependencies = [
  "ahash 0.8.11",
  "axum",
+ "bb8",
+ "bb8-redis",
  "hex",
  "hmac",
  "lazy_static",
  "prisma-client-rust",
  "prisma-client-rust-cli",
+ "redis",
  "serde",
  "serde_json",
  "sha2 0.10.8",
