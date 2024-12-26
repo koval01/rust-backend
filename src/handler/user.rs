@@ -21,6 +21,7 @@ pub async fn user_handler_get(
     InitData(user): InitData<User>,
     db: Database
 ) -> Result<impl IntoResponse, ApiError> {
+    // TODO: We need to integrate redis work into the db object itself to simplify interaction with the data while still using caching
     let user_data = UserResponseData { user };
     let user = db
         .user()
@@ -32,8 +33,8 @@ pub async fn user_handler_get(
     Ok((StatusCode::OK, Json(response)))
 }
 
-/* 
-The code you can see below is already implemented as middleware, 
+/*
+The code you can see below is already implemented as middleware,
 so manual work with CRUD methods is not needed
 */
 
@@ -53,7 +54,7 @@ so manual work with CRUD methods is not needed
 //     let data = db
 //         .user()
 //         .create(
-//             id, 
+//             id,
 //             first_name,
 //             language_code,
 //             allows_write_to_pm,
@@ -64,11 +65,11 @@ so manual work with CRUD methods is not needed
 //             ])
 //         .exec()
 //         .await;
-// 
+//
 //     let response = ApiResponse::success(data);
 //     Ok((StatusCode::OK, Json(response)))
 // }
-// 
+//
 // pub async fn user_handler_put(
 //     InitData(user): InitData<User>,
 //     db: Database
@@ -82,7 +83,7 @@ so manual work with CRUD methods is not needed
 //         allows_write_to_pm,
 //         photo_url,
 //     } = user;
-//     
+//
 //     let data = db
 //         .user()
 //         .update(
@@ -98,7 +99,7 @@ so manual work with CRUD methods is not needed
 //         )
 //         .exec()
 //         .await;
-// 
+//
 //     let response = ApiResponse::success(data);
 //     Ok((StatusCode::OK, Json(response)))
 // }
