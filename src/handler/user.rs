@@ -2,9 +2,7 @@ use axum::{
     response::IntoResponse,
     http::StatusCode,
     Json,
-    Extension,
 };
-use std::sync::Arc;
 
 use crate::{
     error::ApiError,
@@ -13,22 +11,8 @@ use crate::{
     extractor::InitData,
 };
 
-use crate::prisma::*;
-
-type Database = Extension<Arc<PrismaClient>>;
-
-pub async fn user_handler_get(
-    InitData(user): InitData<User>,
-    db: Database
-) -> Result<impl IntoResponse, ApiError> {
-    // TODO: We need to integrate redis work into the db object itself to simplify interaction with the data while still using caching
-    let user_data = UserResponseData { user };
-    let user = db
-        .user()
-        .find_first(vec![user::id::equals(user_data.user.id)])
-        .exec()
-        .await?;
-
+pub async fn user_handler_get(InitData(user): InitData<User>) -> Result<impl IntoResponse, ApiError> {
+    let user = UserResponseData { user };
     let response = ApiResponse::success(user);
     Ok((StatusCode::OK, Json(response)))
 }
@@ -38,6 +22,21 @@ The code you can see below is already implemented as middleware,
 so manual work with CRUD methods is not needed
 */
 
+// pub async fn user_handler_get(
+//     InitData(user): InitData<User>,
+//     db: Database
+// ) -> Result<impl IntoResponse, ApiError> {
+//     let user_data = UserResponseData { user };
+//     let user = db
+//         .user()
+//         .find_first(vec![user::id::equals(user_data.user.id)])
+//         .exec()
+//         .await?;
+//
+//     let response = ApiResponse::success(user);
+//     Ok((StatusCode::OK, Json(response)))
+// }
+//
 // pub async fn user_handler_post(
 //     InitData(user): InitData<User>,
 //     db: Database
