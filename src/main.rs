@@ -20,10 +20,7 @@ use redis::AsyncCommands;
 mod prisma;
 use prisma::PrismaClient;
 
-use axum::http::{
-    header::{ACCEPT, AUTHORIZATION, CONTENT_TYPE},
-    HeaderValue, Method,
-};
+use axum::http::{header::{ACCEPT, CONTENT_TYPE}, HeaderName, HeaderValue, Method};
 use axum::extract::{ Extension };
 use route::create_router;
 
@@ -38,7 +35,7 @@ use sentry_tower::NewSentryLayer;
 use tracing::info;
 
 use crate::{
-    middleware::request_id_middleware
+    middleware::{request_id_middleware, timestamp_guard_middleware}
 };
 
 #[tokio::main]
@@ -61,7 +58,12 @@ async fn main() {
         .allow_origin(cors_host.parse::<HeaderValue>().unwrap())
         .allow_methods([Method::GET, Method::POST, Method::PATCH, Method::DELETE])
         .allow_credentials(true)
-        .allow_headers([AUTHORIZATION, ACCEPT, CONTENT_TYPE]);
+        .allow_headers([
+            ACCEPT, 
+            CONTENT_TYPE,
+            HeaderName::from_static("x-initdata"),
+            HeaderName::from_static("x-timestamp"),
+        ]);
 
     let redis_url = env::var("REDIS_URL").unwrap_or_else(|_| "redis://localhost".to_string());
     let redis_manager = RedisConnectionManager::new(redis_url).unwrap();
@@ -86,6 +88,7 @@ async fn main() {
         .layer(NewSentryLayer::new_from_top())
         .layer(TraceLayer::new_for_http())
         .layer(axum::middleware::from_fn(request_id_middleware))
+        .layer(axum::middleware::from_fn(timestamp_guard_middleware))
         .layer(cors)
         .layer(tower::limit::ConcurrencyLimitLayer::new(1000))
         .into_inner();

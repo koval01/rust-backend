@@ -13,6 +13,7 @@ use crate::response::ApiResponse;
 pub enum ApiError {
     BadRequest,
     Unauthorized,
+    Forbidden,
     NotFound(String),
     Timeout,
     Database(QueryError),
@@ -25,6 +26,7 @@ impl ApiError {
         match self {
             ApiError::BadRequest => StatusCode::BAD_REQUEST,
             ApiError::Unauthorized => StatusCode::UNAUTHORIZED,
+            ApiError::Forbidden => StatusCode::FORBIDDEN,
             ApiError::NotFound(_) => StatusCode::NOT_FOUND,
             ApiError::Timeout => StatusCode::GATEWAY_TIMEOUT,
             ApiError::Database(_) => StatusCode::INTERNAL_SERVER_ERROR,
@@ -37,6 +39,7 @@ impl ApiError {
         match self {
             ApiError::BadRequest => "bad request".to_string(),
             ApiError::Unauthorized => "unauthorised".to_string(),
+            ApiError::Forbidden => "forbidden".to_string(),
             ApiError::NotFound(error) => if error.is_empty() { "not found".to_string() } else { error.clone() },
             ApiError::Timeout => "request timed out".to_string(),
             ApiError::Database(error) => format!("database error: {}", error),
