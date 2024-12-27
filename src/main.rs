@@ -95,11 +95,12 @@ async fn main() {
         .layer(Extension(redis_pool))
         .layer(Extension(prisma_client));
 
-    info!("🚀 Server started successfully");
-
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:8000")
+    let _bind = env::var("SERVER_BIND").unwrap_or_else(|_| "0.0.0.0:8000".to_string());
+    let listener = tokio::net::TcpListener::bind(&_bind)
         .await
         .unwrap();
+
+    info!("🚀 Server started successfully on {}", _bind);
 
     axum::serve(
         listener,
