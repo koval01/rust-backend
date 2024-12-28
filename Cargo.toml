@@ -37,3 +37,4 @@ sentry = { version = "0.35", features = ["tracing"] }
 sentry-tower = "0.35"
 uuid = "1"
 chrono = "0.4"
+moka = { version = "0.12", features = ["future"] }

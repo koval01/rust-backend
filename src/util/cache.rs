@@ -6,6 +6,7 @@ use bb8_redis::{
 use serde::{de::DeserializeOwned, Serialize};
 use std::time::Duration;
 use std::future::Future;
+use moka::future::Cache;
 use serde_json::{to_string, from_str};
 use prisma_client_rust::QueryError;
 use crate::error::ApiError;
@@ -42,28 +43,33 @@ impl From<CacheError> for ApiError {
     }
 }
 
-// A generic wrapper for Redis-based caching
 pub struct CacheWrapper<T> {
-    redis_pool: Pool<RedisConnectionManager>, // Redis connection pool
-    cache_ttl: Duration,                     // Time-to-live for cached data
-    _phantom: std::marker::PhantomData<T>,   // Marker for generic type T
+    redis_pool: Pool<RedisConnectionManager>,    // Redis connection pool
+    moka_cache: Cache<String, String>,          // Moka in-memory cache
+    cache_ttl: Duration,                        // Time-to-live for Redis cache
+    _phantom: std::marker::PhantomData<T>,      // Marker for generic type T
 }
 
+// A generic wrapper for Redis-based caching
 impl<T> CacheWrapper<T>
 where
     T: Serialize + DeserializeOwned + Send + Sync,
 {
-    // Constructor for CacheWrapper
-    pub fn new(redis_pool: Pool<RedisConnectionManager>, cache_ttl_secs: u64) -> Self {
+    /// Constructor for CacheWrapper
+    pub fn new(
+        redis_pool: Pool<RedisConnectionManager>,
+        moka_cache: Cache<String, String>,
+        cache_ttl_secs: u64,
+    ) -> Self {
         Self {
             redis_pool,
+            moka_cache,
             cache_ttl: Duration::from_secs(cache_ttl_secs),
             _phantom: std::marker::PhantomData,
         }
     }
 
-    /// Attempts to retrieve the value from cache. If not found, fetches it from the database
-    /// and caches the result. If the value does not exist in the database, caches a "not found" marker.
+    /// Attempts to retrieve the value from Moka, Redis, or database (via `db_fetch`).
     pub async fn get_or_set<F>(
         &self,
         key: &str,
@@ -72,61 +78,89 @@ where
     where
         F: Future<Output = Result<Option<T>, QueryError>>, // A future that fetches data from the database
     {
-        let mut conn = self.redis_pool.get().await.map_err(CacheError::from)?;
-
-        // Check if the key exists in Redis
-        if let Ok(Some(cached_data)) = conn.get::<_, Option<String>>(key).await {
-            if cached_data == "__not_found__" {
-                // If the key is marked as "not found", return a NotFound error
+        // Step 1: Check Moka cache
+        if let Some(cached_value) = self.moka_cache.get(key).await {
+            if cached_value == "__not_found__" {
                 return Err(CacheError::NotFound);
             }
-            if let Ok(parsed_data) = from_str(&cached_data) {
-                // If the cached data is valid, return it
+            if let Ok(parsed_data) = from_str(&cached_value) {
                 return Ok(parsed_data);
             }
         }
 
-        // If the data is not in the cache, fetch it from the database
+        // Step 2: Check Redis cache
+        let mut conn = self.redis_pool.get().await.map_err(CacheError::from)?;
+        if let Ok(Some(cached_data)) = conn.get::<_, Option<String>>(key).await {
+            if cached_data == "__not_found__" {
+                // Cache "not found" marker in Moka
+                self.moka_cache.insert(key.to_string(), "__not_found__".to_string()).await;
+                return Err(CacheError::NotFound);
+            }
+            if let Ok(parsed_data) = from_str(&cached_data) {
+                // Cache the result in Moka
+                self.moka_cache.insert(key.to_string(), cached_data).await;
+                return Ok(parsed_data);
+            }
+        }
+
+        // Step 3: Fetch from database
         let db_result = db_fetch.await.map_err(CacheError::from)?;
 
         if let Some(data) = db_result {
-            // If the data is found, cache it in Redis
+            // Cache the result in both Moka and Redis
             if let Ok(serialized) = to_string(&data) {
-                let _: Result<(), _> = conn
-                    .set_ex(key, serialized, self.cache_ttl.as_secs())
-                    .await;
+                self.moka_cache.insert(key.to_string(), serialized.clone()).await;
+                let mut conn = self.redis_pool.get().await.map_err(CacheError::from)?;
+                let _: Result<(), _> = conn.set_ex(key, serialized, self.cache_ttl.as_secs()).await;
             }
             Ok(data)
         } else {
-            // If the data is not found, cache the "not found" marker
+            // Cache "not found" marker in both Moka and Redis
             self.cache_not_found(key).await?;
             Err(CacheError::NotFound)
         }
     }
 
-    /// Caches a "not found" marker for a given key to prevent repeated database queries
+    /// Caches a "not found" marker in both Moka and Redis
     pub async fn cache_not_found(&self, key: &str) -> Result<(), CacheError> {
+        self.moka_cache.insert(key.to_string(), "__not_found__".to_string()).await;
         let mut conn = self.redis_pool.get().await.map_err(CacheError::from)?;
         let _: Result<(), _> = conn
-            .set_ex(key, "__not_found__", self.cache_ttl.as_secs()) // Cache the "not found" marker
+            .set_ex(key, "__not_found__", self.cache_ttl.as_secs())
             .await;
         Ok(())
     }
 
-    /// Updates the cache with new data for a given key
+    /// Updates the cache with new data for a given key in both Moka and Redis
     pub async fn set(&self, key: &str, data: &T) -> Result<(), CacheError> {
+        let serialized = to_string(data).map_err(|_| CacheError::NotFound)?;
+
+        // Check Moka cache first
+        if let Some(cached_value) = self.moka_cache.get(key).await {
+            // If cached data is the same as the new data, skip deletion
+            if cached_value == serialized {
+                return Ok(());
+            }
+        }
+
+        // Update Moka cache
+        self.moka_cache.insert(key.to_string(), serialized.clone()).await;
+
+        // Update Redis cache without deleting
         let mut conn = self.redis_pool.get().await.map_err(CacheError::from)?;
-        let serialized = to_string(data).map_err(|_| CacheError::NotFound)?; // Serialize the data
         let _: Result<(), _> = conn
-            .set_ex(key, serialized, self.cache_ttl.as_secs()) // Cache the serialized data
+            .set_ex(key, serialized, self.cache_ttl.as_secs())
             .await;
+
         Ok(())
     }
 
-    /// Deletes a key from the cache
+    /// Deletes a key from both Moka and Redis
+    #[allow(dead_code)]
     pub async fn delete(&self, key: &str) -> Result<(), CacheError> {
+        self.moka_cache.invalidate(key).await;
         let mut conn = self.redis_pool.get().await.map_err(CacheError::from)?;
-        let _: Result<(), _> = conn.del(key).await; // Remove the key from Redis
+        let _: Result<(), _> = conn.del(key).await;
         Ok(())
     }
 }
