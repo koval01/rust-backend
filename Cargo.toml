@@ -12,29 +12,29 @@ strip = true
 debug = false
 
 [dependencies]
-axum = "0.7"
+axum = "0"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 tokio = { version = "1", features = ["full"] }
 tower-http = { version = "0.6", features = ["cors", "trace"] }
-hmac = "0.12"
-sha2 = "0.10"
-hex = "0.4"
+hmac = "0"
+sha2 = "0"
+hex = "0"
 tower = { version = "0.5", features = ["limit", "buffer", "timeout"] }
 urlencoding = "2"
 lazy_static = "1.5"
-ahash = "0.8"
-url = "2.5"
-bb8 = "0.9"
-bb8-redis = "0.18"
-redis = { version = "0.27", features = ["tokio-comp", "tokio-native-tls-comp"] }
+ahash = "0"
+url = "2"
+bb8 = "0"
+bb8-redis = "0"
+redis = { version = "0", features = ["tokio-comp", "tokio-native-tls-comp"] }
 prisma-client-rust = { git = "https://github.com/Brendonovich/prisma-client-rust", tag = "0.6.11" }
 prisma-client-rust-cli = { git = "https://github.com/Brendonovich/prisma-client-rust", tag = "0.6.11" }
-tracing-subscriber = "0.3.19"
-num_cpus = "1.16.0"
-tracing = "0.1.41"
-sentry = { version = "0.35", features = ["tracing"] }
-sentry-tower = "0.35"
+tracing-subscriber = "0.3"
+num_cpus = "1.16"
+tracing = "0.1"
+sentry = { version = "0", features = ["tracing"] }
+sentry-tower = "0"
 uuid = "1"
 chrono = "0.4"
 moka = { version = "0.12", features = ["future"] }
