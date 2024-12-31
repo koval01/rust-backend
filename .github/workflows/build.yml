@@ -24,11 +24,11 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-latest
+          - os: ubuntu-22.04
             arch: x86_64
             target: x86_64-unknown-linux-gnu
 
-          - os: ubuntu-latest
+          - os: ubuntu-22.04
             arch: aarch64
             target: aarch64-unknown-linux-gnu
 
@@ -37,8 +37,16 @@ jobs:
             target: x86_64-pc-windows-msvc
 
           - os: windows-latest
+            arch: i686
+            target: i686-pc-windows-msvc
+
+          - os: windows-latest
             arch: aarch64
             target: aarch64-pc-windows-msvc
+
+          - os: macos-latest
+            arch: x86_64
+            target: x86_64-apple-darwin
 
           - os: macos-latest
             arch: aarch64
@@ -47,37 +55,45 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Cache OpenSSL for ARM
-        if: matrix.os == 'ubuntu-latest' && matrix.arch == 'aarch64'
-        uses: actions/cache@v3
-        with:
-          path: /opt/openssl-arm64
-          key: openssl-arm64-${{ matrix.target }}-v1.1.1
-          restore-keys: |
-            openssl-arm64-${{ matrix.target }}-
-
       - name: Install dependencies (Ubuntu)
-        if: matrix.os == 'ubuntu-latest'
+        if: matrix.os == 'ubuntu-22.04'
         run: |
-          sudo sed -i 's/noble/focal/g' /etc/apt/sources.list
+          sudo tee /etc/apt/sources.list <<EOF
+          deb [arch=amd64] https://archive.ubuntu.com/ubuntu/ jammy main restricted
+          deb [arch=amd64] https://archive.ubuntu.com/ubuntu/ jammy-updates main restricted
+          deb [arch=amd64] https://archive.ubuntu.com/ubuntu/ jammy universe
+          deb [arch=amd64] https://archive.ubuntu.com/ubuntu/ jammy-updates universe
+          deb [arch=amd64] https://archive.ubuntu.com/ubuntu/ jammy multiverse
+          deb [arch=amd64] https://archive.ubuntu.com/ubuntu/ jammy-updates multiverse
+          deb [arch=amd64] https://archive.ubuntu.com/ubuntu/ jammy-backports main restricted universe multiverse
+          deb [arch=amd64] https://security.ubuntu.com/ubuntu/ jammy-security main restricted
+          deb [arch=amd64] https://security.ubuntu.com/ubuntu/ jammy-security universe
+          deb [arch=amd64] https://security.ubuntu.com/ubuntu/ jammy-security multiverse
+          deb [arch=armhf,arm64] https://ports.ubuntu.com/ubuntu-ports jammy main restricted
+          deb [arch=armhf,arm64] https://ports.ubuntu.com/ubuntu-ports jammy-updates main restricted
+          deb [arch=armhf,arm64] https://ports.ubuntu.com/ubuntu-ports jammy universe
+          deb [arch=armhf,arm64] https://ports.ubuntu.com/ubuntu-ports jammy-updates universe
+          deb [arch=armhf,arm64] https://ports.ubuntu.com/ubuntu-ports jammy multiverse
+          deb [arch=armhf,arm64] https://ports.ubuntu.com/ubuntu-ports jammy-updates multiverse
+          deb [arch=armhf,arm64] https://ports.ubuntu.com/ubuntu-ports jammy-backports main restricted universe multiverse
+          deb [arch=armhf,arm64] https://ports.ubuntu.com/ubuntu-ports jammy-security main restricted
+          deb [arch=armhf,arm64] https://ports.ubuntu.com/ubuntu-ports jammy-security universe
+          deb [arch=armhf,arm64] https://ports.ubuntu.com/ubuntu-ports jammy-security multiverse
+          EOF
           sudo apt-get update -y
-          sudo apt-get install -y pkg-config libssl-dev
+          sudo apt-get upgrade -y
+          sudo apt-get install -y pkg-config libssl-dev build-essential
           
           if [ "${{ matrix.arch }}" = "aarch64" ]; then
-            sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
-            sudo apt-get install -y crossbuild-essential-arm64
-          
-            if [ ! -d "/opt/openssl-arm64" ]; then
-              sudo apt-get install -y wget make
-              wget https://www.openssl.org/source/openssl-1.1.1.tar.gz
-              tar -xvf openssl-1.1.1.tar.gz
-              cd openssl-1.1.1
-              ./Configure linux-aarch64 --prefix=/opt/openssl-arm64
-              make CC=aarch64-linux-gnu-gcc
-              make install
-            else
-              echo "Using cached OpenSSL build at /opt/openssl-arm64"
-            fi
+            sudo dpkg --add-architecture arm64
+            sudo apt-get update -y
+            sudo apt-get upgrade -y
+            rustup target add ${{ matrix.target }}
+            sudo apt-get install -y \
+              gcc-aarch64-linux-gnu \
+              g++-aarch64-linux-gnu \
+              crossbuild-essential-arm64 \
+              libssl-dev:arm64
           fi
 
       - name: Install dependencies (macOS)
@@ -96,15 +112,10 @@ jobs:
           target: ${{ matrix.target }}
           override: true
 
-      - name: Cache dependencies
-        uses: actions/cache@v3
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
         with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            src/prisma.rs
-            target
-          key: ${{ runner.os }}-cargo-${{ matrix.target }}-${{ hashFiles('**/Cargo.lock') }}
+          prefix-key: ${{ matrix.target }}
 
       - name: Generate Prisma Client
         run: |
@@ -120,46 +131,57 @@ jobs:
           CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_AR: ${{ matrix.arch == 'aarch64' && 'aarch64-linux-gnu-ar' || '' }}
           PKG_CONFIG_SYSROOT_DIR: ${{ matrix.arch == 'aarch64' && '/' || '' }}
           PKG_CONFIG_PATH: ${{ matrix.arch == 'aarch64' && '/usr/lib/aarch64-linux-gnu/pkgconfig' || '' }}
-          OPENSSL_DIR: ${{ matrix.arch == 'aarch64' && '/opt/openssl-arm64' || '/usr' }}
-          OPENSSL_LIB_DIR: ${{ matrix.arch == 'aarch64' && '/opt/openssl-arm64/lib' || '/usr/lib/x86_64-linux-gnu' }}
-          OPENSSL_INCLUDE_DIR: ${{ matrix.arch == 'aarch64' && '/opt/openssl-arm64/include' || '/usr/include' }}
           PKG_CONFIG_ALLOW_CROSS: ${{ matrix.arch == 'x86_64' && '1' || '' }}
 
       - name: Prepare artifacts
         shell: bash
         run: |
           mkdir -p artifacts
-          
+
           case "${{ matrix.os }}" in
             "windows-latest")
               os_name="windows"
               binary_name="tma-rust.exe"
+              prisma_binary="prisma.exe"
               ;;
             "macos-latest")
               os_name="macos"
               binary_name="tma-rust"
+              prisma_binary="prisma"
               ;;
-            "ubuntu-latest")
+            "ubuntu-22.04")
               os_name="linux"
               binary_name="tma-rust"
+              prisma_binary="prisma"
               ;;
             *)
               echo "Unknown OS: ${{ matrix.os }}"
               exit 1
               ;;
           esac
-          
-          target_dir="target/${{ matrix.target }}/release/${binary_name}"
-          if [ -f "$target_dir" ]; then
+
+          target_binary="target/${{ matrix.target }}/release/${binary_name}"
+          if [ -f "$target_binary" ]; then
             new_name="tma-rust-${os_name}-${{ matrix.arch }}"
-            cp "$target_dir" "artifacts/$new_name"
+            cp "$target_binary" "artifacts/$new_name"
           else
-            echo "Binary not found at: $target_dir"
+            echo "Binary not found at: $target_binary"
             echo "Contents of target directory:"
             ls -R target/
             exit 1
           fi
-          
+
+          target_prisma="target/${{ matrix.target }}/release/${prisma_binary}"
+          if [ -f "$target_prisma" ]; then
+            new_prisma_name="tma-rust-prisma-${os_name}-${{ matrix.arch }}"
+            cp "$target_prisma" "artifacts/$new_prisma_name"
+          else
+            echo "Prisma binary not found at: $target_prisma"
+            echo "Contents of target directory:"
+            ls -R target/
+            exit 1
+          fi
+
           zip -j "artifacts/tma-rust-${os_name}-${{ matrix.arch }}.zip" artifacts/*
 
       - name: Upload artifacts
@@ -168,16 +190,24 @@ jobs:
           name: "tma-rust-${{ matrix.os }}-${{ matrix.arch }}"
           path: artifacts/*.zip
 
-      - name: Get short SHA
+      - name: Get short SHA and current date
         id: vars
-        run: echo "short_sha=${GITHUB_SHA::8}" >> $GITHUB_ENV
+        shell: bash
+        run: |
+          if [[ matrix.os == "windows-latest" ]]; then
+            echo "short_sha=${GITHUB_SHA::8}" >> $env:GITHUB_OUTPUT
+            echo "build_date=$(Get-Date -Format 'yyyy.MM.dd')" >> $env:GITHUB_OUTPUT
+          else
+            echo "short_sha=${GITHUB_SHA::8}" >> $GITHUB_OUTPUT
+            echo "build_date=$(date +'%Y.%m.%d')" >> $GITHUB_OUTPUT
+          fi
 
       - name: Create Release
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v1
         with:
           files: artifacts/*
-          name: ${{ env.short_sha }}
-          tag_name: v1.0.${{ github.run_number }}
+          name: ${{ steps.vars.outputs.build_date }}-${{ steps.vars.outputs.short_sha }}
+          tag_name: ${{ steps.vars.outputs.build_date }}-${{ steps.vars.outputs.short_sha }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
