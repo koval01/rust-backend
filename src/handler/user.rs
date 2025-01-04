@@ -94,11 +94,11 @@ pub async fn user_handler_post(
             id,
             first_name,
             language_code,
-            allows_write_to_pm,
             vec![
                 user::last_name::set(last_name),
                 user::username::set(username),
                 user::photo_url::set(photo_url),
+                user::SetParam::SetAllowsWriteToPm(allows_write_to_pm),
             ],
         )
         .exec()
