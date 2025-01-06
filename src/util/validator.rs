@@ -80,7 +80,7 @@ pub fn validate_init_data(init_data: &str) -> Result<bool, &'static str> {
         .as_secs();
 
     // Check if the "auth_date" is too old (more than 1 hour ago)
-    if current_time > auth_date + 3600 {
+    if current_time > auth_date + 14400 {
         return Err("auth_date expired");
     }
 
