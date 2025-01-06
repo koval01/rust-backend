@@ -20,6 +20,8 @@ use redis::AsyncCommands;
 
 #[allow(warnings, unused)]
 mod prisma;
+mod service;
+
 use prisma::PrismaClient;
 
 use axum::http::{header::{ACCEPT, CONTENT_TYPE}, HeaderName, HeaderValue, Method};
@@ -36,9 +38,8 @@ use sentry::{ClientOptions, IntoDsn};
 use sentry_tower::NewSentryLayer;
 use tracing::info;
 
-use crate::{
-    middleware::{request_id_middleware, timestamp_guard_middleware}
-};
+#[allow(warnings, unused)]
+use crate::middleware::{request_id_middleware, timestamp_guard_middleware};
 
 async fn initialize_prisma_with_retries(max_retries: u32) -> Arc<PrismaClient> {
     let mut attempts = 0;
@@ -111,11 +112,15 @@ async fn main() {
     let middleware_stack = ServiceBuilder::new()
         .layer(NewSentryLayer::new_from_top())
         .layer(TraceLayer::new_for_http())
-        .layer(axum::middleware::from_fn(request_id_middleware))
-        .layer(axum::middleware::from_fn(timestamp_guard_middleware))
         .layer(cors)
-        .layer(tower::limit::ConcurrencyLimitLayer::new(1000))
-        .into_inner();
+        .layer(tower::limit::ConcurrencyLimitLayer::new(1000));
+
+    #[cfg(not(debug_assertions))]
+    let middleware_stack = middleware_stack
+        .layer(axum::middleware::from_fn(request_id_middleware))
+        .layer(axum::middleware::from_fn(timestamp_guard_middleware));
+
+    let middleware_stack = middleware_stack.into_inner();
 
     let app = create_router()
         .layer(middleware_stack)
