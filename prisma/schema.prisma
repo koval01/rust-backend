@@ -24,55 +24,53 @@ enum Level {
 }
 
 model User {
-  id                 BigInt       @id
-  first_name         String       @db.VarChar(255)
-  last_name          String?      @db.VarChar(255)
-  username           String?      @unique @db.VarChar(33)
-  language_code      String       @db.VarChar(2)
-  allows_write_to_pm Boolean      @default(false)
-  photo_url          String?      @db.VarChar(2048)
-  created_at         DateTime     @default(now())
-  updated_at         DateTime     @updatedAt
-  user_lessons       UserLesson[]
-  user_stats         UserStats?
+  id              BigInt       @id
+  firstName       String       @db.VarChar(255)
+  lastName        String?      @db.VarChar(255)
+  username        String?      @unique @db.VarChar(33)
+  languageCode    String       @db.VarChar(2)
+  allowsWriteToPm Boolean      @default(false)
+  photoUrl        String?      @db.VarChar(2048)
+  createdAt       DateTime     @default(now())
+  userLessons     UserLesson[]
+  userStats       UserStats?
 
   @@index([username])
   @@index([id])
 }
 
 model Lesson {
-  id           String       @id @default(uuid()) @db.Uuid
-  lesson_data  Json
-  studied_lang String       @db.VarChar(2)
-  lesson_lang  String       @db.VarChar(2)
-  level        Level
-  created_at   DateTime     @default(now())
-  user_lessons UserLesson[]
+  id          String       @id @default(uuid()) @db.Uuid
+  lessonData  Json
+  studiedLang String       @db.VarChar(2)
+  lessonLang  String       @db.VarChar(2)
+  level       Level
+  createdAt   DateTime     @default(now())
+  userLessons UserLesson[]
 
-  @@index([studied_lang, lesson_lang, level])
+  @@index([studiedLang, lessonLang, level])
   @@index([id])
 }
 
 model UserLesson {
-  id             String       @id @default(uuid()) @db.Uuid
-  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId         BigInt
-  lesson         Lesson       @relation(fields: [lessonId], references: [id], onDelete: Cascade)
-  lessonId       String       @db.Uuid
-  score          Int          @default(0)
-  status         LessonStatus @default(PENDING)
-  completed_at   DateTime?
-  next_available DateTime?
+  id            String       @id @default(uuid()) @db.Uuid
+  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId        BigInt
+  lesson        Lesson       @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  lessonId      String       @db.Uuid
+  score         Int          @default(0)
+  status        LessonStatus @default(PENDING)
+  completedAt   DateTime?
+  nextAvailable DateTime?
 
   @@unique([userId, lessonId])
   @@index([id])
-  @@index([next_available])
+  @@index([nextAvailable])
 }
 
 model UserStats {
-  userId        BigInt   @id
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  total_score   Int      @default(0)
-  total_lessons Int      @default(0)
-  updated_at    DateTime @updatedAt
+  userId       BigInt @id
+  user         User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  totalScore   Int    @default(0)
+  totalLessons Int    @default(0)
 }

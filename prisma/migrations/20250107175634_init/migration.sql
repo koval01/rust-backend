@@ -7,14 +7,13 @@ CREATE TYPE "Level" AS ENUM ('A1', 'A2', 'B1', 'B2', 'C1', 'C2');
 -- CreateTable
 CREATE TABLE "User" (
     "id" BIGINT NOT NULL,
-    "first_name" VARCHAR(255) NOT NULL,
-    "last_name" VARCHAR(255),
+    "firstName" VARCHAR(255) NOT NULL,
+    "lastName" VARCHAR(255),
     "username" VARCHAR(33),
-    "language_code" VARCHAR(2) NOT NULL,
-    "allows_write_to_pm" BOOLEAN NOT NULL DEFAULT false,
-    "photo_url" VARCHAR(2048),
-    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP(3) NOT NULL,
+    "languageCode" VARCHAR(2) NOT NULL,
+    "allowsWriteToPm" BOOLEAN NOT NULL DEFAULT false,
+    "photoUrl" VARCHAR(2048),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "User_pkey" PRIMARY KEY ("id")
 );
@@ -22,11 +21,11 @@ CREATE TABLE "User" (
 -- CreateTable
 CREATE TABLE "Lesson" (
     "id" UUID NOT NULL,
-    "lesson_data" JSONB NOT NULL,
-    "studied_lang" VARCHAR(2) NOT NULL,
-    "lesson_lang" VARCHAR(2) NOT NULL,
+    "lessonData" JSONB NOT NULL,
+    "studiedLang" VARCHAR(2) NOT NULL,
+    "lessonLang" VARCHAR(2) NOT NULL,
     "level" "Level" NOT NULL,
-    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "Lesson_pkey" PRIMARY KEY ("id")
 );
@@ -38,8 +37,8 @@ CREATE TABLE "UserLesson" (
     "lessonId" UUID NOT NULL,
     "score" INTEGER NOT NULL DEFAULT 0,
     "status" "LessonStatus" NOT NULL DEFAULT 'PENDING',
-    "completed_at" TIMESTAMP(3),
-    "next_available" TIMESTAMP(3),
+    "completedAt" TIMESTAMP(3),
+    "nextAvailable" TIMESTAMP(3),
 
     CONSTRAINT "UserLesson_pkey" PRIMARY KEY ("id")
 );
@@ -47,9 +46,8 @@ CREATE TABLE "UserLesson" (
 -- CreateTable
 CREATE TABLE "UserStats" (
     "userId" BIGINT NOT NULL,
-    "total_score" INTEGER NOT NULL DEFAULT 0,
-    "total_lessons" INTEGER NOT NULL DEFAULT 0,
-    "updated_at" TIMESTAMP(3) NOT NULL,
+    "totalScore" INTEGER NOT NULL DEFAULT 0,
+    "totalLessons" INTEGER NOT NULL DEFAULT 0,
 
     CONSTRAINT "UserStats_pkey" PRIMARY KEY ("userId")
 );
@@ -64,7 +62,7 @@ CREATE INDEX "User_username_idx" ON "User"("username");
 CREATE INDEX "User_id_idx" ON "User"("id");
 
 -- CreateIndex
-CREATE INDEX "Lesson_studied_lang_lesson_lang_level_idx" ON "Lesson"("studied_lang", "lesson_lang", "level");
+CREATE INDEX "Lesson_studiedLang_lessonLang_level_idx" ON "Lesson"("studiedLang", "lessonLang", "level");
 
 -- CreateIndex
 CREATE INDEX "Lesson_id_idx" ON "Lesson"("id");
@@ -73,7 +71,7 @@ CREATE INDEX "Lesson_id_idx" ON "Lesson"("id");
 CREATE INDEX "UserLesson_id_idx" ON "UserLesson"("id");
 
 -- CreateIndex
-CREATE INDEX "UserLesson_next_available_idx" ON "UserLesson"("next_available");
+CREATE INDEX "UserLesson_nextAvailable_idx" ON "UserLesson"("nextAvailable");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "UserLesson_userId_lessonId_key" ON "UserLesson"("userId", "lessonId");
