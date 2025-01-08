@@ -10,7 +10,8 @@ use crate::{
     handler::{
         health_checker_handler,
         user_handler_get,
-        user_id_handler_get
+        user_id_handler_get,
+        lesson_handler_get
     },
     middleware::{validate_middleware, sync_user_middleware},
     error::ApiError,
@@ -30,6 +31,10 @@ pub fn create_router() -> Router {
         .route(
             "/api/v1/user/:id",
             get(user_id_handler_get)
+        )
+        .route(
+            "/api/v1/lesson",
+            get(lesson_handler_get)
         )
         .layer(
             ServiceBuilder::new()
