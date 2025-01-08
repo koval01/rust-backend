@@ -39,3 +39,4 @@ uuid = "1"
 chrono = "0.4"
 moka = { version = "0.12", features = ["future"] }
 google-generative-ai-rs = { version = "0.3", features = ["beta"] }
+anyhow = "1.0.95"
