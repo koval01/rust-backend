@@ -10,11 +10,9 @@ use crate::{
     handler::{
         health_checker_handler,
         user_handler_get,
-        user_handler_post,
-        user_handler_put,
         user_id_handler_get
     },
-    middleware::validate_middleware,
+    middleware::{validate_middleware, sync_user_middleware},
     error::ApiError,
 };
 
@@ -28,8 +26,6 @@ pub fn create_router() -> Router {
         .route(
             "/api/v1/user",
             get(user_handler_get)
-                .post(user_handler_post)
-                .put(user_handler_put),
         )
         .route(
             "/api/v1/user/:id",
@@ -38,6 +34,7 @@ pub fn create_router() -> Router {
         .layer(
             ServiceBuilder::new()
                 .layer(middleware::from_fn(validate_middleware))
+                .layer(middleware::from_fn(sync_user_middleware))
         );
 
     // Merge routes and add shared state and fallback
