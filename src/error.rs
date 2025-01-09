@@ -1,6 +1,7 @@
 use axum::{
     http::StatusCode,
     response::IntoResponse,
+    extract::rejection::QueryRejection,
     Json,
 };
 use bb8::RunError;
@@ -20,6 +21,7 @@ pub enum ApiError {
     Database(QueryError),
     Redis(RunError<RedisError>),
     InternalServerError,
+    Custom(StatusCode, String),
 }
 
 impl ApiError {
@@ -34,6 +36,7 @@ impl ApiError {
             ApiError::Database(_) => StatusCode::INTERNAL_SERVER_ERROR,
             ApiError::Redis(_) => StatusCode::INTERNAL_SERVER_ERROR,
             ApiError::InternalServerError => StatusCode::INTERNAL_SERVER_ERROR,
+            ApiError::Custom(code, _) => *code,
         }
     }
 
@@ -48,6 +51,7 @@ impl ApiError {
             ApiError::Database(error) => format!("database error: {}", error),
             ApiError::Redis(error) => format!("redis error: {}", error),
             ApiError::InternalServerError => "internal error".to_string(),
+            ApiError::Custom(_, message) => message.clone(),
         }
     }
 }
@@ -70,6 +74,11 @@ impl From<serde_json::Error> for ApiError {
     }
 }
 
+impl From<QueryRejection> for ApiError {
+    fn from(e: QueryRejection) -> Self { 
+        ApiError::Custom(StatusCode::BAD_REQUEST, e.body_text()) 
+    }
+}
 
 impl IntoResponse for ApiError {
     fn into_response(self) -> axum::response::Response {
