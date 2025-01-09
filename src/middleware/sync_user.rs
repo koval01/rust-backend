@@ -1,22 +1,14 @@
-use axum::{
-    body::Body,
-    http::Request,
-    middleware::Next,
-    response::Response,
-    Extension,
+use axum::{body::Body, http::Request, middleware::Next, response::Response, Extension};
+
+use crate::{
+    cache_db_query, error::ApiError, extractor::InitData, model::User, prisma::*,
+    util::cache::{CacheWrapper, CacheError},
 };
 
-use moka::future::Cache;
-use std::sync::Arc;
-use crate::{
-    prisma::*,
-    model::User,
-    error::ApiError,
-    extractor::InitData,
-    util::cache::CacheWrapper,
-    cache_db_query,
-};
 use bb8_redis::{bb8::Pool, RedisConnectionManager};
+use moka::future::Cache;
+
+use std::sync::Arc;
 
 pub async fn sync_user_middleware(
     InitData(init_user): InitData<User>,
@@ -36,14 +28,16 @@ pub async fn sync_user_middleware(
         db.user()
             .find_unique(user::id::equals(init_user.id))
             .exec()
-            .await
+            .await,
+        @raw
     );
 
     let _ = match cached_result {
         Ok(existing_user) => {
             if needs_update(&init_user, &existing_user) {
                 // Update user if needed
-                let updated_user = db.user()
+                let updated_user = db
+                    .user()
                     .update(
                         user::id::equals(init_user.id),
                         vec![
@@ -60,14 +54,15 @@ pub async fn sync_user_middleware(
 
                 // Update cache with new data
                 let _ = cache.set(&redis_key, &updated_user).await;
-                updated_user
+                Ok(updated_user)
             } else {
-                existing_user
+                Ok(existing_user)
             }
         }
-        Err(_) => {
+        Err(CacheError::NotFound) => {
             // Create new user if not found
-            let new_user = db.user()
+            let new_user = db
+                .user()
                 .create(
                     init_user.id,
                     init_user.first_name,
@@ -84,8 +79,9 @@ pub async fn sync_user_middleware(
 
             // Cache the new user
             let _ = cache.set(&redis_key, &new_user).await;
-            new_user
+            Ok(new_user)
         }
+        Err(e) => Err(ApiError::from(e))
     };
 
     Ok(next.run(request).await)
