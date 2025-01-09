@@ -89,7 +89,9 @@ ALTER TABLE "UserStats" ADD CONSTRAINT "UserStats_userId_fkey" FOREIGN KEY ("use
 CREATE FUNCTION set_next_available()
     RETURNS TRIGGER AS $$
 BEGIN
-    NEW.next_available := NOW() + INTERVAL '3 days';
+    IF (NEW.status = 'COMPLETED' AND OLD.status != 'COMPLETED') THEN
+        NEW."nextAvailable" := NOW() + INTERVAL '3 days';
+END IF;
 RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -105,10 +107,9 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- CreateTrigger
-CREATE TRIGGER after_lesson_completion
-    AFTER UPDATE ON "UserLesson"
+CREATE TRIGGER before_lesson_completion
+    BEFORE UPDATE ON "UserLesson"
     FOR EACH ROW
-    WHEN (NEW.status = 'COMPLETED')
     EXECUTE FUNCTION set_next_available();
 
 -- CreateTrigger
