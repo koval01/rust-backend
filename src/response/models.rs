@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use crate::model::User;
+use crate::{model::User, prisma};
 
 use std::str::FromStr;
 
@@ -8,7 +8,7 @@ pub struct UserResponseData {
     pub user: User,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "UPPERCASE")]
 pub enum Level {
     A1,
@@ -16,6 +16,7 @@ pub enum Level {
     B1,
     B2,
     C1,
+    C2
 }
 
 impl FromStr for Level {
@@ -28,7 +29,34 @@ impl FromStr for Level {
             "B1" => Ok(Level::B1),
             "B2" => Ok(Level::B2),
             "C1" => Ok(Level::C1),
+            "C2" => Ok(Level::C2),
             _ => Err(()),
+        }
+    }
+}
+
+impl From<&Level> for prisma::Level {
+    fn from(level: &Level) -> Self {
+        match level {
+            Level::A1 => prisma::Level::A1,
+            Level::A2 => prisma::Level::A2,
+            Level::B1 => prisma::Level::B1,
+            Level::B2 => prisma::Level::B2,
+            Level::C1 => prisma::Level::C1,
+            Level::C2 => prisma::Level::C2,
+        }
+    }
+}
+
+impl From<prisma::Level> for Level {
+    fn from(level: prisma::Level) -> Self {
+        match level {
+            prisma::Level::A1 => Level::A1,
+            prisma::Level::A2 => Level::A2,
+            prisma::Level::B1 => Level::B1,
+            prisma::Level::B2 => Level::B2,
+            prisma::Level::C1 => Level::C1,
+            prisma::Level::C2 => Level::C2,
         }
     }
 }
