@@ -5,7 +5,7 @@ use crate::{
 };
 
 pub async fn health_checker_handler() -> impl IntoResponse {
-    const MESSAGE: &str = "CRUD API in Rust using Axum";
+    const MESSAGE: &str = "Hello from Duolang core!";
     let response: ApiResponse<()> = ApiResponse::message_only(MESSAGE);
     Json(response)
 }
