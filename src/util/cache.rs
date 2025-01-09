@@ -3,13 +3,17 @@ use bb8_redis::{
     RedisConnectionManager,
     redis::{RedisError, AsyncCommands},
 };
+
 use serde::{de::DeserializeOwned, Serialize};
+use serde_json::{to_string, from_str};
+
+use moka::future::Cache;
+use prisma_client_rust::QueryError;
+
+use crate::error::ApiError;
+
 use std::time::Duration;
 use std::future::Future;
-use moka::future::Cache;
-use serde_json::{to_string, from_str};
-use prisma_client_rust::QueryError;
-use crate::error::ApiError;
 
 #[derive(Debug)]
 pub enum CacheError {
@@ -44,7 +48,7 @@ impl From<CacheError> for ApiError {
 }
 
 pub struct CacheWrapper<T> {
-    redis_pool: Pool<RedisConnectionManager>,    // Redis connection pool
+    redis_pool: Pool<RedisConnectionManager>,   // Redis connection pool
     moka_cache: Cache<String, String>,          // Moka in-memory cache
     cache_ttl: Duration,                        // Time-to-live for Redis cache
     _phantom: std::marker::PhantomData<T>,      // Marker for generic type T
@@ -174,5 +178,9 @@ macro_rules! cache_db_query {
 
     ($cache:expr, $key:expr, $query:expr, $error_handler:expr) => {
         $cache.get_or_set($key, async { $query }).await.map_err($error_handler)
+    };
+    
+    ($cache:expr, $key:expr, $query:expr, @raw) => {
+        $cache.get_or_set($key, async { $query }).await
     };
 }
