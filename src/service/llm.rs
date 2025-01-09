@@ -149,9 +149,9 @@ Also German is only used as an example, work with the languages that the user is
             },
         ],
         generation_config: Some(GenerationConfig {
-            temperature: Option::from(0.3),
-            top_p: Option::from(0.88),
-            top_k: Option::from(512),
+            temperature: Option::from(0.4),
+            top_p: Option::from(0.8),
+            top_k: Option::from(1024),
             candidate_count: Option::from(1),
             max_output_tokens: Option::from(8192),
             stop_sequences: None,
