@@ -1031,6 +1031,41 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "77c90badedccf4105eca100756a0b1289e191f6fcbdadd3cee1d2f614f97da8f"
 
 [[package]]
+name = "duolang"
+version = "0.1.0"
+dependencies = [
+ "ahash 0.8.11",
+ "anyhow",
+ "axum",
+ "bb8",
+ "bb8-redis",
+ "chrono",
+ "google-generative-ai-rs",
+ "hex",
+ "hmac",
+ "lazy_static",
+ "moka",
+ "num_cpus",
+ "prisma-client-rust",
+ "prisma-client-rust-cli",
+ "redis",
+ "sentry",
+ "sentry-tower",
+ "serde",
+ "serde_json",
+ "serde_urlencoded",
+ "sha2 0.10.8",
+ "tokio",
+ "tower",
+ "tower-http",
+ "tracing",
+ "tracing-subscriber",
+ "url",
+ "urlencoding",
+ "uuid",
+]
+
+[[package]]
 name = "either"
 version = "1.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5352,41 +5387,6 @@ name = "tinyvec_macros"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1f3ccbac311fea05f86f61904b462b55fb3df8837a366dfc601a0161d0532f20"
-
-[[package]]
-name = "tma-rust"
-version = "0.1.0"
-dependencies = [
- "ahash 0.8.11",
- "anyhow",
- "axum",
- "bb8",
- "bb8-redis",
- "chrono",
- "google-generative-ai-rs",
- "hex",
- "hmac",
- "lazy_static",
- "moka",
- "num_cpus",
- "prisma-client-rust",
- "prisma-client-rust-cli",
- "redis",
- "sentry",
- "sentry-tower",
- "serde",
- "serde_json",
- "serde_urlencoded",
- "sha2 0.10.8",
- "tokio",
- "tower",
- "tower-http",
- "tracing",
- "tracing-subscriber",
- "url",
- "urlencoding",
- "uuid",
-]
 
 [[package]]
 name = "tokio"
