@@ -97,6 +97,21 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- CreateFunction
+CREATE OR REPLACE FUNCTION update_user_stats()
+    RETURNS TRIGGER AS $$
+BEGIN
+    IF (NEW.status = 'COMPLETED' AND OLD.status != 'COMPLETED') THEN
+UPDATE "UserStats"
+SET
+    "totalScore" = "totalScore" + NEW.score,
+    "totalLessons" = "totalLessons" + 1
+WHERE "userId" = NEW."userId";
+END IF;
+RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- CreateFunction
 CREATE FUNCTION create_user_stats()
     RETURNS TRIGGER AS $$
 BEGIN
@@ -111,6 +126,12 @@ CREATE TRIGGER before_lesson_completion
     BEFORE UPDATE ON "UserLesson"
     FOR EACH ROW
     EXECUTE FUNCTION set_next_available();
+
+-- CreateTrigger
+CREATE TRIGGER after_lesson_completion
+    AFTER UPDATE ON "UserLesson"
+    FOR EACH ROW
+    EXECUTE FUNCTION update_user_stats();
 
 -- CreateTrigger
 CREATE TRIGGER after_user_insert
