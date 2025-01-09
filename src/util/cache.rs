@@ -179,7 +179,7 @@ macro_rules! cache_db_query {
     ($cache:expr, $key:expr, $query:expr, $error_handler:expr) => {
         $cache.get_or_set($key, async { $query }).await.map_err($error_handler)
     };
-    
+
     ($cache:expr, $key:expr, $query:expr, @raw) => {
         $cache.get_or_set($key, async { $query }).await
     };

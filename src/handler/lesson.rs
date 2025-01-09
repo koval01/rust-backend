@@ -5,23 +5,24 @@ use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum::{Extension, Json};
 
-use crate::{
-    error::ApiError,
-    extractor::InitData,
-    model::Lesson,
-    model::User,
-    prisma::PrismaClient,
-    response::{ApiResponse, LessonQuery},
-    service::llm,
-};
-
+use serde_json::json;
 use tracing::error;
+
+use crate::prisma;
+use crate::{
+    service::llm,
+    error::ApiError, 
+    extractor::InitData,
+    prisma::PrismaClient,
+    model::{Lesson, User},
+    response::{ApiResponse, LessonQuery}
+};
 
 type Database = Extension<Arc<PrismaClient>>;
 
 pub async fn lesson_handler_get(
     InitData(user): InitData<User>,
-    Extension(db): Extension<Arc<PrismaClient>>,
+    db: Database,
     params: Result<Query<LessonQuery>, axum::extract::rejection::QueryRejection>,
 ) -> Result<impl IntoResponse, ApiError> {
     let params = params.map_err(ApiError::from)?;
@@ -60,23 +61,37 @@ pub async fn lesson_handler_get(
         ApiError::InternalServerError
     })?;
 
-    let new_lesson = db
-        .lesson()
-        .create(
-            response_text.parse()?,
-            format!("{:?}", params.target_language),
-            format!("{:?}", params.source_language),
-            (&params.level).into(),
-            vec![],
-        )
-        .exec()
-        .await;
-    
-    let _ = match new_lesson {
-        Ok(user) => println!("OK"),
-        Err(error) => println!("{}", error.to_string()),
-    };
+    let (_, user_lesson) = db
+        ._transaction()
+        .run(|client| async move {
+            let new_lesson = client
+                .lesson()
+                .create(
+                    response_text.parse().unwrap(),
+                    format!("{:?}", params.target_language),
+                    format!("{:?}", params.source_language),
+                    (&params.level).into(),
+                    vec![],
+                )
+                .exec()
+                .await?;
 
-    let response = ApiResponse::success(lesson_response);
+            client
+                .user_lesson()
+                .create(
+                    prisma::user::id::equals(user.id),
+                    prisma::lesson::id::equals(String::from(&new_lesson.id)),
+                    vec![]
+                )
+                .exec()
+                .await
+                .map(|user_lesson| (new_lesson, user_lesson))
+        })
+        .await?;
+
+    let response = ApiResponse::success(json!({
+        "lesson": lesson_response,
+        "lesson_id": user_lesson.id
+    }));
     Ok((StatusCode::OK, Json(response)))
 }

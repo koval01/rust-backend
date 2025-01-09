@@ -61,39 +61,46 @@ impl From<prisma::Level> for Level {
     }
 }
 
-#[derive(Deserialize, Debug)]
-#[serde(rename_all = "lowercase")]
+#[derive(Deserialize, Debug, Serialize)]
 pub enum Language {
-    #[serde(alias = "en")]
-    English,
-    #[serde(alias = "es")]
-    Spanish,
-    #[serde(alias = "zh")]
-    Chinese,
-    #[serde(alias = "ar")]
-    Arabic,
-    #[serde(alias = "pt")]
-    Portuguese,
-    #[serde(alias = "ru")]
-    Russian,
-    #[serde(alias = "jp")]
-    Japanese,
-    #[serde(alias = "de")]
-    German,
-    #[serde(alias = "ko")]
-    Korean,
-    #[serde(alias = "fr")]
-    French,
-    #[serde(alias = "tr")]
-    Turkish,
-    #[serde(alias = "it")]
-    Italian,
-    #[serde(alias = "uk")]
-    Ukrainian,
-    #[serde(alias = "pl")]
-    Polish,
-    #[serde(alias = "cz")]
-    Czech,
+    EN,
+    ES,
+    ZH,
+    AR,
+    PT,
+    RU,
+    JP,
+    DE,
+    KO,
+    FR,
+    TR,
+    IT,
+    UK,
+    PL,
+    CZ,
+}
+
+impl Language {
+    #[allow(dead_code)]
+    pub fn as_name(&self) -> &'static str {
+        match self {
+            Language::EN => "English",
+            Language::ES => "Spanish",
+            Language::ZH => "Chinese",
+            Language::AR => "Arabic",
+            Language::PT => "Portuguese",
+            Language::RU => "Russian",
+            Language::JP => "Japanese",
+            Language::DE => "German",
+            Language::KO => "Korean",
+            Language::FR => "French",
+            Language::TR => "Turkish",
+            Language::IT => "Italian",
+            Language::UK => "Ukrainian",
+            Language::PL => "Polish",
+            Language::CZ => "Czech",
+        }
+    }
 }
 
 impl FromStr for Language {
@@ -101,21 +108,21 @@ impl FromStr for Language {
 
     fn from_str(input: &str) -> Result<Language, Self::Err> {
         match input.to_lowercase().as_str() {
-            "en" => Ok(Language::English),
-            "es" => Ok(Language::Spanish),
-            "zh" => Ok(Language::Chinese),
-            "ar" => Ok(Language::Arabic),
-            "pt" => Ok(Language::Portuguese),
-            "ru" => Ok(Language::Russian),
-            "jp" => Ok(Language::Japanese),
-            "de" => Ok(Language::German),
-            "ko" => Ok(Language::Korean),
-            "fr" => Ok(Language::French),
-            "tr" => Ok(Language::Turkish),
-            "it" => Ok(Language::Italian),
-            "uk" => Ok(Language::Ukrainian),
-            "pl" => Ok(Language::Polish),
-            "cz" => Ok(Language::Czech),
+            "en" => Ok(Language::EN),
+            "es" => Ok(Language::ES),
+            "zh" => Ok(Language::ZH),
+            "ar" => Ok(Language::AR),
+            "pt" => Ok(Language::PT),
+            "ru" => Ok(Language::RU),
+            "jp" => Ok(Language::JP),
+            "de" => Ok(Language::DE),
+            "ko" => Ok(Language::KO),
+            "fr" => Ok(Language::FR),
+            "tr" => Ok(Language::TR),
+            "it" => Ok(Language::IT),
+            "uk" => Ok(Language::UK),
+            "pl" => Ok(Language::PL),
+            "cz" => Ok(Language::CZ),
             _ => Err(()),
         }
     }
