@@ -38,6 +38,8 @@ use sentry::{ClientOptions, IntoDsn};
 use sentry_tower::NewSentryLayer;
 use tracing::info;
 
+use crate::service::llm::LanguageLearningClient;
+
 #[allow(warnings, unused)]
 use crate::middleware::{request_id_middleware, timestamp_guard_middleware};
 
@@ -109,6 +111,10 @@ async fn main() {
 
     let prisma_client = initialize_prisma_with_retries(3).await;
 
+    let gemini_client = LanguageLearningClient::new()
+        .await
+        .expect("Failed to create Gemini client");
+
     let middleware_stack = ServiceBuilder::new()
         .layer(NewSentryLayer::new_from_top())
         .layer(TraceLayer::new_for_http())
@@ -126,7 +132,8 @@ async fn main() {
         .layer(middleware_stack)
         .layer(Extension(redis_pool))
         .layer(Extension(prisma_client))
-        .layer(Extension(moka_cache));
+        .layer(Extension(moka_cache))
+        .layer(Extension(gemini_client));
 
     let _bind = env::var("SERVER_BIND").unwrap_or_else(|_| "0.0.0.0:8000".to_string());
     let listener = tokio::net::TcpListener::bind(&_bind)

@@ -28,6 +28,7 @@ pub async fn lesson_handler_get(
     InitData(user): InitData<User>,
     db: Database,
     params: Result<Query<LessonQuery>, axum::extract::rejection::QueryRejection>,
+    Extension(gemini_client): Extension<llm::LanguageLearningClient>
 ) -> Result<impl IntoResponse, ApiError> {
     let params = params.map_err(ApiError::from)?;
 
@@ -58,7 +59,7 @@ pub async fn lesson_handler_get(
         ),
         insert_user_lesson AS (
             INSERT INTO "UserLesson" ("id", "userId", "lessonId", "status", "score")
-            SELECT 
+            SELECT
                 gen_random_uuid(),
                 {},
                 l.id,
@@ -67,7 +68,7 @@ pub async fn lesson_handler_get(
             FROM selected_lesson l
             RETURNING *
         )
-        SELECT 
+        SELECT
             l.*,
             ul.id as "userLessonId"
         FROM selected_lesson l
@@ -98,18 +99,20 @@ pub async fn lesson_handler_get(
     }
 
     // Call the LLM generation service
-    let result = llm::generate(
-        &format!("{:?}", params.level),
-        &format!("{:?}", params.source_language),
-        &format!("{:?}", params.target_language),
-    )
-    .await
-    .map_err(|e| {
-        error!("{:?}", e);
-        ApiError::InternalServerError
-    })?;
+    let gemini_request = llm::LanguageLearningRequest::new(
+        format!("{:?}", params.level),
+        format!("{:?}", params.source_language),
+        format!("{:?}", params.target_language)
+    );
 
-    let gemini_response = result.rest().unwrap();
+    let gemini_result = gemini_client.generate_tasks(gemini_request)
+        .await
+        .map_err(|e| {
+            error!("{:?}", e);
+            ApiError::InternalServerError
+        })?;
+
+    let gemini_response = gemini_result.rest().unwrap();
     let candidate = gemini_response
         .candidates
         .first()
