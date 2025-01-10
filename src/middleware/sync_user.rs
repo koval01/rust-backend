@@ -1,8 +1,18 @@
-use axum::{body::Body, http::Request, middleware::Next, response::Response, Extension};
+use axum::{
+    body::Body, 
+    http::Request, 
+    middleware::Next, 
+    response::Response, 
+    Extension
+};
 
 use crate::{
-    cache_db_query, error::ApiError, extractor::InitData, model::User, prisma::*,
-    util::cache::{CacheWrapper, CacheError},
+    cache_db_query, 
+    error::ApiError, 
+    extractor::InitData, 
+    model::User, 
+    prisma::*, 
+    util::cache::{CacheWrapper, CacheError}
 };
 
 use bb8_redis::{bb8::Pool, RedisConnectionManager};
@@ -71,7 +81,7 @@ pub async fn sync_user_middleware(
                         user::last_name::set(init_user.last_name),
                         user::username::set(init_user.username),
                         user::photo_url::set(init_user.photo_url),
-                        user::SetParam::SetAllowsWriteToPm(init_user.allows_write_to_pm),
+                        user::SetParam::SetAllowsWriteToPm(init_user.allows_write_to_pm)
                     ],
                 )
                 .exec()
