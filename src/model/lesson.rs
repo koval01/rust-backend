@@ -1,5 +1,6 @@
 use ahash::HashMap;
 use serde::{Deserialize, Serialize};
+use crate::prisma;
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(tag = "type")]
@@ -53,4 +54,12 @@ pub struct Input {
     pub level: String, // user level (e.g., A1, A2, etc.)
     pub source_language: String, // source language (e.g., "en")
     pub target_language: String, // target language (e.g., "de")
+}
+
+#[derive(Debug, Clone, ::serde::Serialize, ::serde::Deserialize)]
+pub struct DataWithUserLessonId {
+    #[serde(flatten)]
+    pub lesson: prisma::lesson::Data,
+    #[serde(rename = "userLessonId")]
+    pub user_lesson_id: String,
 }
