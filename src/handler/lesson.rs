@@ -8,7 +8,7 @@ use axum::{
 };
 
 use serde_json::json;
-use tracing::error;
+use tracing::debug;
 
 use prisma_client_rust::{raw, PrismaValue};
 
@@ -108,7 +108,7 @@ pub async fn lesson_handler_get(
     let gemini_result = gemini_client.generate_tasks(gemini_request)
         .await
         .map_err(|e| {
-            error!("{:?}", e);
+            debug!("{:?}", e);
             ApiError::InternalServerError
         })?;
 
@@ -127,7 +127,7 @@ pub async fn lesson_handler_get(
     let response_text = part.text.as_ref().ok_or(ApiError::InternalServerError)?;
 
     let lesson_response: Lesson = serde_json::from_str(response_text).map_err(|e| {
-        error!(
+        debug!(
             "JSON Gemini response parsing error: {:?}. Input data: {:?}",
             e, response_text
         );

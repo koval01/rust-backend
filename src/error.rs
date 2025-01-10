@@ -9,7 +9,7 @@ use bb8::RunError;
 use prisma_client_rust::QueryError;
 use redis::RedisError;
 
-use tracing::error;
+use tracing::debug;
 use crate::response::ApiResponse;
 
 #[allow(dead_code)]
@@ -61,28 +61,28 @@ impl ApiError {
 
 impl From<QueryError> for ApiError {
     fn from(error: QueryError) -> Self {
-        error!("{:#?}", error);
+        debug!("{:#?}", error);
         ApiError::Database(error)
     }
 }
 
 impl From<RedisError> for ApiError {
     fn from(error: RedisError) -> Self {
-        error!("{:#?}", error);
+        debug!("{:#?}", error);
         ApiError::Redis(RunError::User(error))
     }
 }
 
 impl From<serde_json::Error> for ApiError {
     fn from(error: serde_json::Error) -> Self {
-        error!("{:#?}", error);
+        debug!("{:#?}", error);
         ApiError::InternalServerError
     }
 }
 
 impl From<QueryRejection> for ApiError {
-    fn from(error: QueryRejection) -> Self { 
-        error!("{:#?}", error);
+    fn from(error: QueryRejection) -> Self {
+        debug!("{:#?}", error);
         ApiError::Custom(StatusCode::BAD_REQUEST, error.body_text()) 
     }
 }
