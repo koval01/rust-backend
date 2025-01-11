@@ -28,8 +28,8 @@ url = "2.5"
 bb8 = "0.9"
 bb8-redis = "0.20"
 redis = { version = "0.28", features = ["tokio-comp", "tokio-native-tls-comp"] }
-prisma-client-rust = { git = "https://github.com/koval01/prisma-client-rust", rev = "17fc1a8d5c2e44ea0bdb1535093b2b078d2de944", features = ["postgresql"] }
-prisma-client-rust-cli = { git = "https://github.com/koval01/prisma-client-rust", rev = "17fc1a8d5c2e44ea0bdb1535093b2b078d2de944", features = ["postgresql"] }
+prisma-client-rust = { git = "https://github.com/koval01/prisma-client-rust", rev = "e29468d6d44419fe96086f486ad586f27bf29769", features = ["postgresql"] }
+prisma-client-rust-cli = { git = "https://github.com/koval01/prisma-client-rust", rev = "e29468d6d44419fe96086f486ad586f27bf29769", features = ["postgresql"] }
 tracing-subscriber = "0.3"
 num_cpus = "1.16"
 tracing = "0.1"

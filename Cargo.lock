@@ -473,7 +473,7 @@ dependencies = [
 [[package]]
 name = "builtin-psl-connectors"
 version = "0.1.0"
-source = "git+https://github.com/Brendonovich/prisma-engines?tag=pcr-0.6.10#c4aeef82dbae310e974d6122160c7e3b5fb6df53"
+source = "git+https://github.com/koval01/prisma-engines?rev=c4aeef82dbae310e974d6122160c7e3b5fb6df53#c4aeef82dbae310e974d6122160c7e3b5fb6df53"
 dependencies = [
  "connection-string 0.1.13",
  "either",
@@ -879,7 +879,7 @@ checksum = "e8566979429cf69b49a5c740c60791108e86440e8be149bbea4fe54d2c32d6e2"
 [[package]]
 name = "datamodel-renderer"
 version = "0.1.0"
-source = "git+https://github.com/Brendonovich/prisma-engines?tag=pcr-0.6.10#c4aeef82dbae310e974d6122160c7e3b5fb6df53"
+source = "git+https://github.com/koval01/prisma-engines?rev=c4aeef82dbae310e974d6122160c7e3b5fb6df53#c4aeef82dbae310e974d6122160c7e3b5fb6df53"
 dependencies = [
  "base64 0.13.1",
  "once_cell",
@@ -933,7 +933,7 @@ dependencies = [
 [[package]]
 name = "diagnostics"
 version = "0.1.0"
-source = "git+https://github.com/Brendonovich/prisma-engines?tag=pcr-0.6.10#c4aeef82dbae310e974d6122160c7e3b5fb6df53"
+source = "git+https://github.com/koval01/prisma-engines?rev=c4aeef82dbae310e974d6122160c7e3b5fb6df53#c4aeef82dbae310e974d6122160c7e3b5fb6df53"
 dependencies = [
  "colored",
  "indoc",
@@ -994,7 +994,7 @@ dependencies = [
 [[package]]
 name = "dml"
 version = "0.1.0"
-source = "git+https://github.com/Brendonovich/prisma-engines?tag=pcr-0.6.10#c4aeef82dbae310e974d6122160c7e3b5fb6df53"
+source = "git+https://github.com/koval01/prisma-engines?rev=c4aeef82dbae310e974d6122160c7e3b5fb6df53#c4aeef82dbae310e974d6122160c7e3b5fb6df53"
 dependencies = [
  "chrono",
  "cuid",
@@ -1012,7 +1012,7 @@ dependencies = [
 [[package]]
 name = "dmmf"
 version = "0.1.0"
-source = "git+https://github.com/Brendonovich/prisma-engines?tag=pcr-0.6.10#c4aeef82dbae310e974d6122160c7e3b5fb6df53"
+source = "git+https://github.com/koval01/prisma-engines?rev=c4aeef82dbae310e974d6122160c7e3b5fb6df53#c4aeef82dbae310e974d6122160c7e3b5fb6df53"
 dependencies = [
  "bigdecimal",
  "indexmap 1.9.3",
@@ -2154,7 +2154,7 @@ dependencies = [
 [[package]]
 name = "introspection-connector"
 version = "0.1.0"
-source = "git+https://github.com/Brendonovich/prisma-engines?tag=pcr-0.6.10#c4aeef82dbae310e974d6122160c7e3b5fb6df53"
+source = "git+https://github.com/koval01/prisma-engines?rev=c4aeef82dbae310e974d6122160c7e3b5fb6df53#c4aeef82dbae310e974d6122160c7e3b5fb6df53"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -2227,7 +2227,7 @@ dependencies = [
 [[package]]
 name = "json-rpc-api-build"
 version = "0.1.0"
-source = "git+https://github.com/Brendonovich/prisma-engines?tag=pcr-0.6.10#c4aeef82dbae310e974d6122160c7e3b5fb6df53"
+source = "git+https://github.com/koval01/prisma-engines?rev=c4aeef82dbae310e974d6122160c7e3b5fb6df53#c4aeef82dbae310e974d6122160c7e3b5fb6df53"
 dependencies = [
  "backtrace",
  "heck 0.3.3",
@@ -2618,7 +2618,7 @@ dependencies = [
 [[package]]
 name = "migration-connector"
 version = "0.1.0"
-source = "git+https://github.com/Brendonovich/prisma-engines?tag=pcr-0.6.10#c4aeef82dbae310e974d6122160c7e3b5fb6df53"
+source = "git+https://github.com/koval01/prisma-engines?rev=c4aeef82dbae310e974d6122160c7e3b5fb6df53#c4aeef82dbae310e974d6122160c7e3b5fb6df53"
 dependencies = [
  "chrono",
  "enumflags2",
@@ -2633,7 +2633,7 @@ dependencies = [
 [[package]]
 name = "migration-core"
 version = "0.1.0"
-source = "git+https://github.com/Brendonovich/prisma-engines?tag=pcr-0.6.10#c4aeef82dbae310e974d6122160c7e3b5fb6df53"
+source = "git+https://github.com/koval01/prisma-engines?rev=c4aeef82dbae310e974d6122160c7e3b5fb6df53#c4aeef82dbae310e974d6122160c7e3b5fb6df53"
 dependencies = [
  "async-trait",
  "chrono",
@@ -2788,7 +2788,7 @@ dependencies = [
 [[package]]
 name = "mongodb-client"
 version = "0.1.0"
-source = "git+https://github.com/Brendonovich/prisma-engines?tag=pcr-0.6.10#c4aeef82dbae310e974d6122160c7e3b5fb6df53"
+source = "git+https://github.com/koval01/prisma-engines?rev=c4aeef82dbae310e974d6122160c7e3b5fb6df53#c4aeef82dbae310e974d6122160c7e3b5fb6df53"
 dependencies = [
  "mongodb",
  "once_cell",
@@ -2799,7 +2799,7 @@ dependencies = [
 [[package]]
 name = "mongodb-introspection-connector"
 version = "0.1.0"
-source = "git+https://github.com/Brendonovich/prisma-engines?tag=pcr-0.6.10#c4aeef82dbae310e974d6122160c7e3b5fb6df53"
+source = "git+https://github.com/koval01/prisma-engines?rev=c4aeef82dbae310e974d6122160c7e3b5fb6df53#c4aeef82dbae310e974d6122160c7e3b5fb6df53"
 dependencies = [
  "async-trait",
  "convert_case 0.5.0",
@@ -2822,7 +2822,7 @@ dependencies = [
 [[package]]
 name = "mongodb-migration-connector"
 version = "0.1.0"
-source = "git+https://github.com/Brendonovich/prisma-engines?tag=pcr-0.6.10#c4aeef82dbae310e974d6122160c7e3b5fb6df53"
+source = "git+https://github.com/koval01/prisma-engines?rev=c4aeef82dbae310e974d6122160c7e3b5fb6df53#c4aeef82dbae310e974d6122160c7e3b5fb6df53"
 dependencies = [
  "enumflags2",
  "futures",
@@ -2840,7 +2840,7 @@ dependencies = [
 [[package]]
 name = "mongodb-query-connector"
 version = "0.1.0"
-source = "git+https://github.com/Brendonovich/prisma-engines?tag=pcr-0.6.10#c4aeef82dbae310e974d6122160c7e3b5fb6df53"
+source = "git+https://github.com/koval01/prisma-engines?rev=c4aeef82dbae310e974d6122160c7e3b5fb6df53#c4aeef82dbae310e974d6122160c7e3b5fb6df53"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -2873,7 +2873,7 @@ dependencies = [
 [[package]]
 name = "mongodb-schema-describer"
 version = "0.1.0"
-source = "git+https://github.com/Brendonovich/prisma-engines?tag=pcr-0.6.10#c4aeef82dbae310e974d6122160c7e3b5fb6df53"
+source = "git+https://github.com/koval01/prisma-engines?rev=c4aeef82dbae310e974d6122160c7e3b5fb6df53#c4aeef82dbae310e974d6122160c7e3b5fb6df53"
 dependencies = [
  "futures",
  "mongodb",
@@ -3281,7 +3281,7 @@ dependencies = [
 [[package]]
 name = "parser-database"
 version = "0.1.0"
-source = "git+https://github.com/Brendonovich/prisma-engines?tag=pcr-0.6.10#c4aeef82dbae310e974d6122160c7e3b5fb6df53"
+source = "git+https://github.com/koval01/prisma-engines?rev=c4aeef82dbae310e974d6122160c7e3b5fb6df53#c4aeef82dbae310e974d6122160c7e3b5fb6df53"
 dependencies = [
  "diagnostics",
  "either",
@@ -3510,7 +3510,7 @@ checksum = "c6fa0831dd7cc608c38a5e323422a0077678fa5744aa2be4ad91c4ece8eec8d5"
 [[package]]
 name = "prisma-client-rust"
 version = "0.6.11"
-source = "git+https://github.com/koval01/prisma-client-rust?rev=17fc1a8d5c2e44ea0bdb1535093b2b078d2de944#17fc1a8d5c2e44ea0bdb1535093b2b078d2de944"
+source = "git+https://github.com/koval01/prisma-client-rust?rev=e29468d6d44419fe96086f486ad586f27bf29769#e29468d6d44419fe96086f486ad586f27bf29769"
 dependencies = [
  "base64 0.13.1",
  "bigdecimal",
@@ -3540,7 +3540,7 @@ dependencies = [
 [[package]]
 name = "prisma-client-rust-cli"
 version = "0.6.11"
-source = "git+https://github.com/koval01/prisma-client-rust?rev=17fc1a8d5c2e44ea0bdb1535093b2b078d2de944#17fc1a8d5c2e44ea0bdb1535093b2b078d2de944"
+source = "git+https://github.com/koval01/prisma-client-rust?rev=e29468d6d44419fe96086f486ad586f27bf29769#e29468d6d44419fe96086f486ad586f27bf29769"
 dependencies = [
  "directories",
  "flate2",
@@ -3560,7 +3560,7 @@ dependencies = [
 [[package]]
 name = "prisma-client-rust-macros"
 version = "0.6.11"
-source = "git+https://github.com/koval01/prisma-client-rust?rev=17fc1a8d5c2e44ea0bdb1535093b2b078d2de944#17fc1a8d5c2e44ea0bdb1535093b2b078d2de944"
+source = "git+https://github.com/koval01/prisma-client-rust?rev=e29468d6d44419fe96086f486ad586f27bf29769#e29468d6d44419fe96086f486ad586f27bf29769"
 dependencies = [
  "convert_case 0.6.0",
  "proc-macro2",
@@ -3571,7 +3571,7 @@ dependencies = [
 [[package]]
 name = "prisma-client-rust-sdk"
 version = "0.6.11"
-source = "git+https://github.com/koval01/prisma-client-rust?rev=17fc1a8d5c2e44ea0bdb1535093b2b078d2de944#17fc1a8d5c2e44ea0bdb1535093b2b078d2de944"
+source = "git+https://github.com/koval01/prisma-client-rust?rev=e29468d6d44419fe96086f486ad586f27bf29769#e29468d6d44419fe96086f486ad586f27bf29769"
 dependencies = [
  "convert_case 0.5.0",
  "dml",
@@ -3592,7 +3592,7 @@ dependencies = [
 [[package]]
 name = "prisma-models"
 version = "0.0.0"
-source = "git+https://github.com/Brendonovich/prisma-engines?tag=pcr-0.6.10#c4aeef82dbae310e974d6122160c7e3b5fb6df53"
+source = "git+https://github.com/koval01/prisma-engines?rev=c4aeef82dbae310e974d6122160c7e3b5fb6df53#c4aeef82dbae310e974d6122160c7e3b5fb6df53"
 dependencies = [
  "bigdecimal",
  "chrono",
@@ -3608,7 +3608,7 @@ dependencies = [
 [[package]]
 name = "prisma-value"
 version = "0.1.0"
-source = "git+https://github.com/Brendonovich/prisma-engines?tag=pcr-0.6.10#c4aeef82dbae310e974d6122160c7e3b5fb6df53"
+source = "git+https://github.com/koval01/prisma-engines?rev=c4aeef82dbae310e974d6122160c7e3b5fb6df53#c4aeef82dbae310e974d6122160c7e3b5fb6df53"
 dependencies = [
  "base64 0.12.3",
  "bigdecimal",
@@ -3641,7 +3641,7 @@ dependencies = [
 [[package]]
 name = "psl"
 version = "0.1.0"
-source = "git+https://github.com/Brendonovich/prisma-engines?tag=pcr-0.6.10#c4aeef82dbae310e974d6122160c7e3b5fb6df53"
+source = "git+https://github.com/koval01/prisma-engines?rev=c4aeef82dbae310e974d6122160c7e3b5fb6df53#c4aeef82dbae310e974d6122160c7e3b5fb6df53"
 dependencies = [
  "builtin-psl-connectors",
  "dml",
@@ -3651,7 +3651,7 @@ dependencies = [
 [[package]]
 name = "psl-core"
 version = "0.1.0"
-source = "git+https://github.com/Brendonovich/prisma-engines?tag=pcr-0.6.10#c4aeef82dbae310e974d6122160c7e3b5fb6df53"
+source = "git+https://github.com/koval01/prisma-engines?rev=c4aeef82dbae310e974d6122160c7e3b5fb6df53#c4aeef82dbae310e974d6122160c7e3b5fb6df53"
 dependencies = [
  "bigdecimal",
  "chrono",
@@ -3749,7 +3749,7 @@ dependencies = [
 [[package]]
 name = "query-connector"
 version = "0.1.0"
-source = "git+https://github.com/Brendonovich/prisma-engines?tag=pcr-0.6.10#c4aeef82dbae310e974d6122160c7e3b5fb6df53"
+source = "git+https://github.com/koval01/prisma-engines?rev=c4aeef82dbae310e974d6122160c7e3b5fb6df53#c4aeef82dbae310e974d6122160c7e3b5fb6df53"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -3769,7 +3769,7 @@ dependencies = [
 [[package]]
 name = "query-core"
 version = "0.1.0"
-source = "git+https://github.com/Brendonovich/prisma-engines?tag=pcr-0.6.10#c4aeef82dbae310e974d6122160c7e3b5fb6df53"
+source = "git+https://github.com/koval01/prisma-engines?rev=c4aeef82dbae310e974d6122160c7e3b5fb6df53#c4aeef82dbae310e974d6122160c7e3b5fb6df53"
 dependencies = [
  "async-trait",
  "base64 0.12.3",
@@ -3815,7 +3815,7 @@ dependencies = [
 [[package]]
 name = "query-engine-metrics"
 version = "0.1.0"
-source = "git+https://github.com/Brendonovich/prisma-engines?tag=pcr-0.6.10#c4aeef82dbae310e974d6122160c7e3b5fb6df53"
+source = "git+https://github.com/koval01/prisma-engines?rev=c4aeef82dbae310e974d6122160c7e3b5fb6df53#c4aeef82dbae310e974d6122160c7e3b5fb6df53"
 dependencies = [
  "metrics 0.18.1",
  "metrics-exporter-prometheus",
@@ -4102,7 +4102,7 @@ dependencies = [
 [[package]]
 name = "request-handlers"
 version = "0.1.0"
-source = "git+https://github.com/Brendonovich/prisma-engines?tag=pcr-0.6.10#c4aeef82dbae310e974d6122160c7e3b5fb6df53"
+source = "git+https://github.com/koval01/prisma-engines?rev=c4aeef82dbae310e974d6122160c7e3b5fb6df53#c4aeef82dbae310e974d6122160c7e3b5fb6df53"
 dependencies = [
  "bigdecimal",
  "connection-string 0.1.13",
@@ -4488,7 +4488,7 @@ dependencies = [
 [[package]]
 name = "schema"
 version = "0.1.0"
-source = "git+https://github.com/Brendonovich/prisma-engines?tag=pcr-0.6.10#c4aeef82dbae310e974d6122160c7e3b5fb6df53"
+source = "git+https://github.com/koval01/prisma-engines?rev=c4aeef82dbae310e974d6122160c7e3b5fb6df53#c4aeef82dbae310e974d6122160c7e3b5fb6df53"
 dependencies = [
  "once_cell",
  "prisma-models",
@@ -4498,7 +4498,7 @@ dependencies = [
 [[package]]
 name = "schema-ast"
 version = "0.1.0"
-source = "git+https://github.com/Brendonovich/prisma-engines?tag=pcr-0.6.10#c4aeef82dbae310e974d6122160c7e3b5fb6df53"
+source = "git+https://github.com/koval01/prisma-engines?rev=c4aeef82dbae310e974d6122160c7e3b5fb6df53#c4aeef82dbae310e974d6122160c7e3b5fb6df53"
 dependencies = [
  "diagnostics",
  "pest",
@@ -4508,7 +4508,7 @@ dependencies = [
 [[package]]
 name = "schema-builder"
 version = "0.1.0"
-source = "git+https://github.com/Brendonovich/prisma-engines?tag=pcr-0.6.10#c4aeef82dbae310e974d6122160c7e3b5fb6df53"
+source = "git+https://github.com/koval01/prisma-engines?rev=c4aeef82dbae310e974d6122160c7e3b5fb6df53#c4aeef82dbae310e974d6122160c7e3b5fb6df53"
 dependencies = [
  "itertools 0.10.5",
  "lazy_static",
@@ -4977,12 +4977,12 @@ checksum = "6980e8d7511241f8acf4aebddbb1ff938df5eebe98691418c4468d0b72a96a67"
 [[package]]
 name = "sql-ddl"
 version = "0.1.0"
-source = "git+https://github.com/Brendonovich/prisma-engines?tag=pcr-0.6.10#c4aeef82dbae310e974d6122160c7e3b5fb6df53"
+source = "git+https://github.com/koval01/prisma-engines?rev=c4aeef82dbae310e974d6122160c7e3b5fb6df53#c4aeef82dbae310e974d6122160c7e3b5fb6df53"
 
 [[package]]
 name = "sql-introspection-connector"
 version = "0.1.0"
-source = "git+https://github.com/Brendonovich/prisma-engines?tag=pcr-0.6.10#c4aeef82dbae310e974d6122160c7e3b5fb6df53"
+source = "git+https://github.com/koval01/prisma-engines?rev=c4aeef82dbae310e974d6122160c7e3b5fb6df53#c4aeef82dbae310e974d6122160c7e3b5fb6df53"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -5006,7 +5006,7 @@ dependencies = [
 [[package]]
 name = "sql-migration-connector"
 version = "0.1.0"
-source = "git+https://github.com/Brendonovich/prisma-engines?tag=pcr-0.6.10#c4aeef82dbae310e974d6122160c7e3b5fb6df53"
+source = "git+https://github.com/koval01/prisma-engines?rev=c4aeef82dbae310e974d6122160c7e3b5fb6df53#c4aeef82dbae310e974d6122160c7e3b5fb6df53"
 dependencies = [
  "chrono",
  "connection-string 0.1.13",
@@ -5033,7 +5033,7 @@ dependencies = [
 [[package]]
 name = "sql-query-connector"
 version = "0.1.0"
-source = "git+https://github.com/Brendonovich/prisma-engines?tag=pcr-0.6.10#c4aeef82dbae310e974d6122160c7e3b5fb6df53"
+source = "git+https://github.com/koval01/prisma-engines?rev=c4aeef82dbae310e974d6122160c7e3b5fb6df53#c4aeef82dbae310e974d6122160c7e3b5fb6df53"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -5065,7 +5065,7 @@ dependencies = [
 [[package]]
 name = "sql-schema-describer"
 version = "0.1.0"
-source = "git+https://github.com/Brendonovich/prisma-engines?tag=pcr-0.6.10#c4aeef82dbae310e974d6122160c7e3b5fb6df53"
+source = "git+https://github.com/koval01/prisma-engines?rev=c4aeef82dbae310e974d6122160c7e3b5fb6df53#c4aeef82dbae310e974d6122160c7e3b5fb6df53"
 dependencies = [
  "async-trait",
  "bigdecimal",
@@ -5883,7 +5883,7 @@ checksum = "daf8dba3b7eb870caf1ddeed7bc9d2a049f3cfdfae7cb521b087cc33ae4c49da"
 [[package]]
 name = "user-facing-error-macros"
 version = "0.1.0"
-source = "git+https://github.com/Brendonovich/prisma-engines?tag=pcr-0.6.10#c4aeef82dbae310e974d6122160c7e3b5fb6df53"
+source = "git+https://github.com/koval01/prisma-engines?rev=c4aeef82dbae310e974d6122160c7e3b5fb6df53#c4aeef82dbae310e974d6122160c7e3b5fb6df53"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -5893,7 +5893,7 @@ dependencies = [
 [[package]]
 name = "user-facing-errors"
 version = "0.1.0"
-source = "git+https://github.com/Brendonovich/prisma-engines?tag=pcr-0.6.10#c4aeef82dbae310e974d6122160c7e3b5fb6df53"
+source = "git+https://github.com/koval01/prisma-engines?rev=c4aeef82dbae310e974d6122160c7e3b5fb6df53#c4aeef82dbae310e974d6122160c7e3b5fb6df53"
 dependencies = [
  "backtrace",
  "indoc",
