@@ -41,7 +41,7 @@ use tracing::info;
 use crate::service::llm::LanguageLearningClient;
 
 #[allow(warnings, unused)]
-use crate::middleware::{request_id_middleware, timestamp_guard_middleware};
+use crate::middleware::request_id_middleware;
 
 async fn initialize_prisma_with_retries(max_retries: u32) -> Arc<PrismaClient> {
     let mut attempts = 0;
@@ -123,8 +123,7 @@ async fn main() {
 
     #[cfg(not(debug_assertions))]
     let middleware_stack = middleware_stack
-        .layer(axum::middleware::from_fn(request_id_middleware))
-        .layer(axum::middleware::from_fn(timestamp_guard_middleware));
+        .layer(axum::middleware::from_fn(request_id_middleware));
 
     let middleware_stack = middleware_stack.into_inner();
 

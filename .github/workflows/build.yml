@@ -1,4 +1,4 @@
-name: Build Server
+name: Build and Push Docker Image
 
 on:
   push:
@@ -6,208 +6,102 @@ on:
   pull_request:
     branches: [ main ]
 
-permissions:
-  contents: write
-  packages: write
-  issues: write
-  pull-requests: write
-
 env:
   CARGO_TERM_COLOR: always
+  DOCKER_IMAGE: koval01/duolang
+
+permissions:
+  contents: read
+  packages: write
 
 jobs:
   build:
-    name: Build for ${{ matrix.os }}-${{ matrix.arch }}
-    runs-on: ${{ matrix.os }}
-
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: ubuntu-22.04
-            arch: x86_64
-            target: x86_64-unknown-linux-gnu
-
-          - os: ubuntu-22.04
-            arch: aarch64
-            target: aarch64-unknown-linux-gnu
-
-          - os: windows-latest
-            arch: x86_64
-            target: x86_64-pc-windows-msvc
-
-          - os: windows-latest
-            arch: i686
-            target: i686-pc-windows-msvc
-
-          - os: windows-latest
-            arch: aarch64
-            target: aarch64-pc-windows-msvc
-
-          - os: macos-latest
-            arch: x86_64
-            target: x86_64-apple-darwin
-
-          - os: macos-latest
-            arch: aarch64
-            target: aarch64-apple-darwin
+    name: Build and Push Docker Image
+    runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v3
 
-      - name: Install dependencies (Ubuntu)
-        if: matrix.os == 'ubuntu-22.04'
+      - name: Install dependencies
         run: |
-          sudo tee /etc/apt/sources.list <<EOF
-          deb [arch=amd64] https://archive.ubuntu.com/ubuntu/ jammy main restricted
-          deb [arch=amd64] https://archive.ubuntu.com/ubuntu/ jammy-updates main restricted
-          deb [arch=amd64] https://archive.ubuntu.com/ubuntu/ jammy universe
-          deb [arch=amd64] https://archive.ubuntu.com/ubuntu/ jammy-updates universe
-          deb [arch=amd64] https://archive.ubuntu.com/ubuntu/ jammy multiverse
-          deb [arch=amd64] https://archive.ubuntu.com/ubuntu/ jammy-updates multiverse
-          deb [arch=amd64] https://archive.ubuntu.com/ubuntu/ jammy-backports main restricted universe multiverse
-          deb [arch=amd64] https://security.ubuntu.com/ubuntu/ jammy-security main restricted
-          deb [arch=amd64] https://security.ubuntu.com/ubuntu/ jammy-security universe
-          deb [arch=amd64] https://security.ubuntu.com/ubuntu/ jammy-security multiverse
-          deb [arch=armhf,arm64] https://ports.ubuntu.com/ubuntu-ports jammy main restricted
-          deb [arch=armhf,arm64] https://ports.ubuntu.com/ubuntu-ports jammy-updates main restricted
-          deb [arch=armhf,arm64] https://ports.ubuntu.com/ubuntu-ports jammy universe
-          deb [arch=armhf,arm64] https://ports.ubuntu.com/ubuntu-ports jammy-updates universe
-          deb [arch=armhf,arm64] https://ports.ubuntu.com/ubuntu-ports jammy multiverse
-          deb [arch=armhf,arm64] https://ports.ubuntu.com/ubuntu-ports jammy-updates multiverse
-          deb [arch=armhf,arm64] https://ports.ubuntu.com/ubuntu-ports jammy-backports main restricted universe multiverse
-          deb [arch=armhf,arm64] https://ports.ubuntu.com/ubuntu-ports jammy-security main restricted
-          deb [arch=armhf,arm64] https://ports.ubuntu.com/ubuntu-ports jammy-security universe
-          deb [arch=armhf,arm64] https://ports.ubuntu.com/ubuntu-ports jammy-security multiverse
-          EOF
           sudo apt-get update -y
-          sudo apt-get upgrade -y
           sudo apt-get install -y pkg-config libssl-dev build-essential
-          
-          if [ "${{ matrix.arch }}" = "aarch64" ]; then
-            sudo dpkg --add-architecture arm64
-            sudo apt-get update -y
-            sudo apt-get upgrade -y
-            rustup target add ${{ matrix.target }}
-            sudo apt-get install -y \
-              gcc-aarch64-linux-gnu \
-              g++-aarch64-linux-gnu \
-              crossbuild-essential-arm64 \
-              libssl-dev:arm64
-          fi
-
-      - name: Install dependencies (macOS)
-        if: matrix.os == 'macos-latest'
-        run: |
-          brew install openssl
-
-      - name: Install zip (Windows)
-        if: matrix.os == 'windows-latest'
-        run: choco install zip
 
       - name: Install Rust
         uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
-          target: ${{ matrix.target }}
+          target: x86_64-unknown-linux-gnu
           override: true
 
       - name: Rust cache
         uses: swatinem/rust-cache@v2
         with:
-          prefix-key: ${{ matrix.target }}
+          prefix-key: x86_64-unknown-linux-gnu
 
       - name: Generate Prisma Client
         run: |
           cargo prisma generate
 
-      - name: Build
-        uses: actions-rs/cargo@v1
-        with:
-          command: build
-          args: --release --target ${{ matrix.target }}
-        env:
-          CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: ${{ matrix.arch == 'aarch64' && 'aarch64-linux-gnu-gcc' || '' }}
-          CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_AR: ${{ matrix.arch == 'aarch64' && 'aarch64-linux-gnu-ar' || '' }}
-          PKG_CONFIG_SYSROOT_DIR: ${{ matrix.arch == 'aarch64' && '/' || '' }}
-          PKG_CONFIG_PATH: ${{ matrix.arch == 'aarch64' && '/usr/lib/aarch64-linux-gnu/pkgconfig' || '' }}
-          PKG_CONFIG_ALLOW_CROSS: ${{ matrix.arch == 'x86_64' && '1' || '' }}
+      - name: Build Release Binary
+        run: cargo build --release
 
-      - name: Prepare artifacts
-        shell: bash
-        run: |
-          mkdir -p artifacts
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-          case "${{ matrix.os }}" in
-            "windows-latest")
-              os_name="windows"
-              binary_name="tma-rust.exe"
-              prisma_binary="prisma.exe"
-              ;;
-            "macos-latest")
-              os_name="macos"
-              binary_name="tma-rust"
-              prisma_binary="prisma"
-              ;;
-            "ubuntu-22.04")
-              os_name="linux"
-              binary_name="tma-rust"
-              prisma_binary="prisma"
-              ;;
-            *)
-              echo "Unknown OS: ${{ matrix.os }}"
-              exit 1
-              ;;
-          esac
-
-          target_binary="target/${{ matrix.target }}/release/${binary_name}"
-          if [ -f "$target_binary" ]; then
-            new_name="tma-rust-${os_name}-${{ matrix.arch }}"
-            cp "$target_binary" "artifacts/$new_name"
-          else
-            echo "Binary not found at: $target_binary"
-            echo "Contents of target directory:"
-            ls -R target/
-            exit 1
-          fi
-
-          target_prisma="target/${{ matrix.target }}/release/${prisma_binary}"
-          if [ -f "$target_prisma" ]; then
-            new_prisma_name="tma-rust-prisma-${os_name}-${{ matrix.arch }}"
-            cp "$target_prisma" "artifacts/$new_prisma_name"
-          else
-            echo "Prisma binary not found at: $target_prisma"
-            echo "Contents of target directory:"
-            ls -R target/
-            exit 1
-          fi
-
-          zip -j "artifacts/tma-rust-${os_name}-${{ matrix.arch }}.zip" artifacts/*
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: "tma-rust-${{ matrix.os }}-${{ matrix.arch }}"
-          path: artifacts/*.zip
-
-      - name: Get short SHA and current date
+      - name: Get version info
         id: vars
-        shell: bash
         run: |
-          if [[ matrix.os == "windows-latest" ]]; then
-            echo "short_sha=${GITHUB_SHA::8}" >> $env:GITHUB_OUTPUT
-            echo "build_date=$(Get-Date -Format 'yyyy.MM.dd')" >> $env:GITHUB_OUTPUT
-          else
-            echo "short_sha=${GITHUB_SHA::8}" >> $GITHUB_OUTPUT
-            echo "build_date=$(date +'%Y.%m.%d')" >> $GITHUB_OUTPUT
-          fi
+          echo "build_date=$(date +'%Y.%m.%d')" >> $GITHUB_OUTPUT
+          echo "short_sha=${GITHUB_SHA::8}" >> $GITHUB_OUTPUT
 
-      - name: Create Release
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: softprops/action-gh-release@v1
+      - name: Prepare binaries for Docker
+        run: |
+          mkdir -p docker-files
+          cp target/release/duolang docker-files/
+
+      - name: Build Docker image for testing
+        uses: docker/build-push-action@v5
         with:
-          files: artifacts/*
-          name: ${{ steps.vars.outputs.build_date }}-${{ steps.vars.outputs.short_sha }}
-          tag_name: ${{ steps.vars.outputs.build_date }}-${{ steps.vars.outputs.short_sha }}
+          context: .
+          file: Dockerfile
+          load: true
+          tags: ${{ env.DOCKER_IMAGE }}:test
+
+      - name: Test Docker image
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          REDIS_URL: ${{ secrets.REDIS_URL }}
+          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+        run: |
+          docker run -d --name test-container \
+            -e GEMINI_API_KEY="${GEMINI_API_KEY}" \
+            -e DATABASE_URL="${DATABASE_URL}" \
+            -e REDIS_URL="${REDIS_URL}" \
+            -e BOT_TOKEN="${BOT_TOKEN}" \
+            -p 8000:8000 \
+            ${{ env.DOCKER_IMAGE }}:test
+          
+          sleep 20
+
+          docker exec test-container curl -f http://localhost:8000/api/v1/health || exit 1
+          docker stop test-container
+          docker rm test-container
+
+      - name: Login to Docker Hub
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          username: koval01
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: |
+            ${{ env.DOCKER_IMAGE }}:latest
+            ${{ env.DOCKER_IMAGE }}:${{ steps.vars.outputs.build_date }}-${{ steps.vars.outputs.short_sha }}

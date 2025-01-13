@@ -13,14 +13,30 @@ use crate::{
         user_id_handler_get,
         lesson_handler_get
     },
-    middleware::{validate_middleware, sync_user_middleware},
+    middleware::{
+        validate_middleware, 
+        sync_user_middleware
+    },
     error::ApiError,
 };
+
+#[allow(warnings, unused)]
+use crate::middleware::timestamp_guard_middleware;
 
 pub fn create_router() -> Router {
     // Routes without middleware
     let public_routes = Router::new()
         .route("/api/v1/health", get(health_checker_handler));
+    
+    let protected_middlewares = ServiceBuilder::new()
+        .layer(middleware::from_fn(validate_middleware))
+        .layer(middleware::from_fn(sync_user_middleware));
+
+    #[cfg(not(debug_assertions))]
+    let protected_middlewares = protected_middlewares
+        .layer(axum::middleware::from_fn(timestamp_guard_middleware));
+
+    let protected_middlewares = protected_middlewares.into_inner();
 
     // Routes with middleware
     let protected_routes = Router::new()
@@ -37,9 +53,7 @@ pub fn create_router() -> Router {
             get(lesson_handler_get)
         )
         .layer(
-            ServiceBuilder::new()
-                .layer(middleware::from_fn(validate_middleware))
-                .layer(middleware::from_fn(sync_user_middleware))
+            protected_middlewares
         );
 
     // Merge routes and add shared state and fallback
