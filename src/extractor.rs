@@ -1,5 +1,4 @@
 use axum::{
-    async_trait,
     extract::FromRequestParts,
     http::request::Parts,
 };
@@ -10,7 +9,6 @@ use crate::error::ApiError;
 
 pub struct InitData<T>(pub T);
 
-#[async_trait]
 impl<T, S> FromRequestParts<S> for InitData<T>
 where
     T: DeserializeOwned,

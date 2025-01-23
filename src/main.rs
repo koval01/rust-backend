@@ -24,8 +24,10 @@ mod service;
 
 use prisma::PrismaClient;
 
-use axum::http::{header::{ACCEPT, CONTENT_TYPE}, HeaderName, HeaderValue, Method};
-use axum::extract::{ Extension };
+use axum::{
+    http::{header::{ACCEPT, CONTENT_TYPE}, HeaderName, HeaderValue, Method},
+    extract::Extension,
+};
 use route::create_router;
 
 use tower::ServiceBuilder;
@@ -125,8 +127,6 @@ async fn main() {
     let middleware_stack = middleware_stack
         .layer(axum::middleware::from_fn(request_id_middleware));
 
-    let middleware_stack = middleware_stack.into_inner();
-
     let app = create_router()
         .layer(middleware_stack)
         .layer(Extension(redis_pool))
@@ -143,9 +143,8 @@ async fn main() {
 
     axum::serve(
         listener,
-        app.into_make_service_with_connect_info::<std::net::SocketAddr>(),
+        app.into_make_service_with_connect_info::<std::net::SocketAddr>()
     )
-        .tcp_nodelay(true)
         .await
         .unwrap();
 }

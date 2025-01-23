@@ -217,13 +217,13 @@ checksum = "ace50bade8e6234aa140d9a2f552bbee1db4d353f69b8217bc503490fc1a9f26"
 
 [[package]]
 name = "axum"
-version = "0.7.9"
+version = "0.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "edca88bc138befd0323b20752846e6587272d3b03b0343c8ea28a6f819e6e71f"
+checksum = "6d6fd624c75e18b3b4c6b9caf42b1afe24437daaee904069137d8bab077be8b8"
 dependencies = [
- "async-trait",
  "axum-core",
  "bytes",
+ "form_urlencoded",
  "futures-util",
  "http 1.2.0",
  "http-body 1.0.1",
@@ -251,11 +251,10 @@ dependencies = [
 
 [[package]]
 name = "axum-core"
-version = "0.4.5"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "09f2bd6146b97ae3359fa0cc6d6b376d9539582c7b4220f041a33ec24c226199"
+checksum = "df1362f362fd16024ae199c1970ce98f9661bf5ef94b9808fee734bc3698b733"
 dependencies = [
- "async-trait",
  "bytes",
  "futures-util",
  "http 1.2.0",
@@ -2200,15 +2199,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "itertools"
-version = "0.13.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "413ee7dfc52ee1a4949ceeb7dbc8a33f2d6c088194d9f922fb8318faf1f01186"
-dependencies = [
- "either",
-]
-
-[[package]]
 name = "itoa"
 version = "1.0.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2502,9 +2492,9 @@ checksum = "2532096657941c2fea9c289d370a250971c689d4f143798ff67113ec042024a5"
 
 [[package]]
 name = "matchit"
-version = "0.7.3"
+version = "0.8.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0e7465ac9959cc2b1404e8e2367b43684a6d13790fe23056cc8c6c5a6b7bcb94"
+checksum = "47e1ffaa40ddd1f3ed91f717a33c8c0ee23fff369e3aa8772b9605cc1d22f4c3"
 
 [[package]]
 name = "md-5"
@@ -2850,7 +2840,7 @@ dependencies = [
  "cuid",
  "futures",
  "indexmap 1.9.3",
- "itertools 0.10.5",
+ "itertools",
  "mongodb",
  "mongodb-client",
  "prisma-models",
@@ -3596,7 +3586,7 @@ source = "git+https://github.com/koval01/prisma-engines?rev=c4aeef82dbae310e974d
 dependencies = [
  "bigdecimal",
  "chrono",
- "itertools 0.10.5",
+ "itertools",
  "once_cell",
  "prisma-value",
  "psl",
@@ -3658,7 +3648,7 @@ dependencies = [
  "diagnostics",
  "enumflags2",
  "indoc",
- "itertools 0.10.5",
+ "itertools",
  "lsp-types",
  "once_cell",
  "parser-database",
@@ -3756,7 +3746,7 @@ dependencies = [
  "chrono",
  "futures",
  "indexmap 1.9.3",
- "itertools 0.10.5",
+ "itertools",
  "prisma-models",
  "prisma-value",
  "serde",
@@ -3781,7 +3771,7 @@ dependencies = [
  "enumflags2",
  "futures",
  "indexmap 1.9.3",
- "itertools 0.10.5",
+ "itertools",
  "lazy_static",
  "lru",
  "mongodb-client",
@@ -3994,15 +3984,14 @@ dependencies = [
 
 [[package]]
 name = "redis"
-version = "0.28.0"
+version = "0.28.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ff21dd025d2d3d2a6ad6788c0f7153f82d063216a7638f70367aac5790fea5da"
+checksum = "9f89727cba9cec05cc579942321ff6dd09fe57a8b3217f52f952301efa010da5"
 dependencies = [
  "arc-swap",
  "bytes",
  "combine 4.6.7",
  "futures-util",
- "itertools 0.13.0",
  "itoa",
  "native-tls",
  "num-bigint",
@@ -4110,7 +4099,7 @@ dependencies = [
  "futures",
  "graphql-parser",
  "indexmap 1.9.3",
- "itertools 0.10.5",
+ "itertools",
  "psl",
  "query-core",
  "serde",
@@ -4510,7 +4499,7 @@ name = "schema-builder"
 version = "0.1.0"
 source = "git+https://github.com/koval01/prisma-engines?rev=c4aeef82dbae310e974d6122160c7e3b5fb6df53#c4aeef82dbae310e974d6122160c7e3b5fb6df53"
 dependencies = [
- "itertools 0.10.5",
+ "itertools",
  "lazy_static",
  "once_cell",
  "prisma-models",
@@ -4763,9 +4752,9 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.135"
+version = "1.0.137"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2b0d7ba2887406110130a978386c4e1befb98c674b4fba677954e4db976630d9"
+checksum = "930cfb6e6abf99298aaad7d29abbef7a9999a9a8806a40088f55f0dcec03146b"
 dependencies = [
  "indexmap 2.7.0",
  "itoa",
@@ -5041,7 +5030,7 @@ dependencies = [
  "chrono",
  "cuid",
  "futures",
- "itertools 0.10.5",
+ "itertools",
  "once_cell",
  "opentelemetry",
  "prisma-models",
@@ -5924,9 +5913,9 @@ checksum = "06abde3611657adf66d383f00b093d7faecc7fa57071cce2578660c9f1010821"
 
 [[package]]
 name = "uuid"
-version = "1.11.1"
+version = "1.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b913a3b5fe84142e269d63cc62b64319ccaf89b748fc31fe025177f767a756c4"
+checksum = "b3758f5e68192bb96cc8f9b7e2c2cfdabb435499a28499a42f8f984092adad4b"
 dependencies = [
  "getrandom 0.2.15",
  "serde",

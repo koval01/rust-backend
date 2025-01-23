@@ -45,7 +45,7 @@ pub fn create_router() -> Router {
             get(user_handler_get)
         )
         .route(
-            "/api/v1/user/:id",
+            "/api/v1/user/{id}",
             get(user_id_handler_get)
         )
         .route(
