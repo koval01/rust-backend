@@ -23,19 +23,23 @@ enum Level {
   C2
 }
 
-model User {
-  id              BigInt       @id
-  firstName       String       @db.VarChar(255)
-  lastName        String?      @db.VarChar(255)
-  username        String?      @unique @db.VarChar(33)
-  languageCode    String       @db.VarChar(2)
-  allowsWriteToPm Boolean      @default(false)
-  photoUrl        String?      @db.VarChar(2048)
-  createdAt       DateTime     @default(now())
-  userLessons     UserLesson[]
-  userStats       UserStats?
+enum Role {
+  USER
+  ADMIN
+}
 
-  @@index([username])
+model User {
+  id          String       @id @default(uuid()) @db.Uuid
+  googleId    String       @db.VarChar(32)
+  displayName String       @db.VarChar(255)
+  role        Role         @default(USER)
+  photoUrl    String?      @db.VarChar(2048)
+  visible     Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+  userLessons UserLesson[]
+  userStats   UserStats?
+
+  @@index([googleId])
   @@index([id])
 }
 
@@ -55,7 +59,7 @@ model Lesson {
 model UserLesson {
   id            String       @id @default(uuid()) @db.Uuid
   user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId        BigInt
+  userId        String       @db.Uuid
   lesson        Lesson       @relation(fields: [lessonId], references: [id], onDelete: Cascade)
   lessonId      String       @db.Uuid
   score         Int          @default(0)
@@ -69,7 +73,7 @@ model UserLesson {
 }
 
 model UserStats {
-  userId       BigInt @id
+  userId       String @id @db.Uuid
   user         User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   totalScore   Int    @default(0)
   totalLessons Int    @default(0)

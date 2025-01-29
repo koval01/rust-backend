@@ -5,16 +5,16 @@ CREATE TYPE "LessonStatus" AS ENUM ('PENDING', 'COMPLETED', 'SKIPPED');
 CREATE TYPE "Level" AS ENUM ('A1', 'A2', 'B1', 'B2', 'C1', 'C2');
 
 -- CreateEnum
-CREATE TYPE "Role" as ENUM ('USER', 'ADMIN');
+CREATE TYPE "Role" AS ENUM ('USER', 'ADMIN');
 
 -- CreateTable
 CREATE TABLE "User" (
     "id" UUID NOT NULL,
-    "googleId" BIGINT NOT NULL,
+    "googleId" VARCHAR(32) NOT NULL,
     "displayName" VARCHAR(255) NOT NULL,
     "role" "Role" NOT NULL DEFAULT 'USER',
     "photoUrl" VARCHAR(2048),
-    "visible" BOOLEAN NOT NULL DEFAULT TRUE,
+    "visible" BOOLEAN NOT NULL DEFAULT true,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "User_pkey" PRIMARY KEY ("id")
@@ -35,7 +35,7 @@ CREATE TABLE "Lesson" (
 -- CreateTable
 CREATE TABLE "UserLesson" (
     "id" UUID NOT NULL,
-    "userId" BIGINT NOT NULL,
+    "userId" UUID NOT NULL,
     "lessonId" UUID NOT NULL,
     "score" INTEGER NOT NULL DEFAULT 0,
     "status" "LessonStatus" NOT NULL DEFAULT 'PENDING',
@@ -47,7 +47,7 @@ CREATE TABLE "UserLesson" (
 
 -- CreateTable
 CREATE TABLE "UserStats" (
-    "userId" BIGINT NOT NULL,
+    "userId" UUID NOT NULL,
     "totalScore" INTEGER NOT NULL DEFAULT 0,
     "totalLessons" INTEGER NOT NULL DEFAULT 0,
 
@@ -55,10 +55,7 @@ CREATE TABLE "UserStats" (
 );
 
 -- CreateIndex
-CREATE UNIQUE INDEX "User_username_key" ON "User"("username");
-
--- CreateIndex
-CREATE INDEX "User_username_idx" ON "User"("username");
+CREATE INDEX "User_googleId_idx" ON "User"("googleId");
 
 -- CreateIndex
 CREATE INDEX "User_id_idx" ON "User"("id");
