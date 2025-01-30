@@ -40,7 +40,10 @@ use sentry::{ClientOptions, IntoDsn};
 use sentry_tower::NewSentryLayer;
 use tracing::info;
 
-use crate::service::llm::LanguageLearningClient;
+use crate::{
+    service::llm::LanguageLearningClient,
+    extractor::JwtKey
+};
 
 #[allow(warnings, unused)]
 use crate::middleware::request_id_middleware;
@@ -89,6 +92,10 @@ async fn main() {
             HeaderName::from_static("x-timestamp"),
         ]);
 
+    let jwt_secret = env::var("JWT_SECRET").expect("JWT_SECRET must be set");
+    let jwt_key = JwtKey::new(jwt_secret.as_bytes())
+        .expect("Failed to create JWT key");
+
     let moka_cache: Cache<String, String> = Cache::builder()
         .time_to_live(Duration::from_secs(60))
         .max_capacity(32_000)
@@ -132,7 +139,8 @@ async fn main() {
         .layer(Extension(redis_pool))
         .layer(Extension(prisma_client))
         .layer(Extension(moka_cache))
-        .layer(Extension(gemini_client));
+        .layer(Extension(gemini_client))
+        .layer(Extension(jwt_key));
 
     let _bind = env::var("SERVER_BIND").unwrap_or_else(|_| "0.0.0.0:8000".to_string());
     let listener = tokio::net::TcpListener::bind(&_bind)
