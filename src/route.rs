@@ -4,18 +4,20 @@ use axum::{
     Router,
     response::IntoResponse,
 };
+use axum::routing::post;
 use tower::ServiceBuilder;
 
 use crate::{
     handler::{
         health_checker_handler,
-        user_handler_get,
-        user_id_handler_get,
-        lesson_handler_get
+        login, callback,
+        // user_handler_get,
+        // user_id_handler_get,
+        // lesson_handler_get
     },
     middleware::{
         validate_middleware, 
-        sync_user_middleware
+        // sync_user_middleware
     },
     error::ApiError,
 };
@@ -26,11 +28,13 @@ use crate::middleware::timestamp_guard_middleware;
 pub fn create_router() -> Router {
     // Routes without middleware
     let public_routes = Router::new()
-        .route("/api/v1/health", get(health_checker_handler));
+        .route("/api/v1/health", get(health_checker_handler))
+        .route("/api/v1/auth/login", get(login))
+        .route("/api/v1/auth/callback", get(callback));
     
     let protected_middlewares = ServiceBuilder::new()
-        .layer(middleware::from_fn(validate_middleware))
-        .layer(middleware::from_fn(sync_user_middleware));
+        .layer(middleware::from_fn(validate_middleware));
+        // .layer(middleware::from_fn(sync_user_middleware));
 
     #[cfg(not(debug_assertions))]
     let protected_middlewares = protected_middlewares
@@ -40,18 +44,18 @@ pub fn create_router() -> Router {
 
     // Routes with middleware
     let protected_routes = Router::new()
-        .route(
-            "/api/v1/user",
-            get(user_handler_get)
-        )
-        .route(
-            "/api/v1/user/{id}",
-            get(user_id_handler_get)
-        )
-        .route(
-            "/api/v1/lesson",
-            get(lesson_handler_get)
-        )
+    //     .route(
+    //         "/api/v1/user",
+    //         get(user_handler_get)
+    //     )
+    //     .route(
+    //         "/api/v1/user/{id}",
+    //         get(user_id_handler_get)
+    //     )
+    //     .route(
+    //         "/api/v1/lesson",
+    //         get(lesson_handler_get)
+    //     )
         .layer(
             protected_middlewares
         );
