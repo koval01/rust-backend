@@ -1,5 +1,4 @@
 use axum::{
-    middleware,
     routing::{get},
     Router,
     response::IntoResponse,
@@ -15,10 +14,6 @@ use crate::{
         // user_id_handler_get,
         // lesson_handler_get
     },
-    middleware::{
-        validate_middleware, 
-        // sync_user_middleware
-    },
     error::ApiError,
 };
 
@@ -32,9 +27,7 @@ pub fn create_router() -> Router {
         .route("/api/v1/auth/login", get(login))
         .route("/api/v1/auth/callback", get(callback));
     
-    let protected_middlewares = ServiceBuilder::new()
-        .layer(middleware::from_fn(validate_middleware));
-        // .layer(middleware::from_fn(sync_user_middleware));
+    let protected_middlewares = ServiceBuilder::new();
 
     #[cfg(not(debug_assertions))]
     let protected_middlewares = protected_middlewares
