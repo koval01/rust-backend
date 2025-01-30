@@ -1,11 +1,11 @@
 use serde::{Deserialize, Serialize};
-use crate::{model::User, prisma};
+use crate::{model::GoogleUser, prisma};
 
 use std::str::FromStr;
 
 #[derive(Serialize)]
 pub struct UserResponseData {
-    pub user: User,
+    pub user: GoogleUser,
 }
 
 #[derive(Deserialize, Debug, Clone)]
