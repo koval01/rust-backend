@@ -1,9 +1,27 @@
 use std::collections::BTreeMap;
 use serde::{Deserialize, Serialize};
 
+#[derive(Debug, Deserialize, Serialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum Role {
+    User,
+    Admin
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct User {
+    pub id: i64,
+    pub google_id: String,
+    pub display_name: String,
+    pub role: Role,
+    pub photo_url: Option<String>,
+    pub visible: bool
+}
+
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct GoogleUser {
-    pub id: String,
+    #[serde(rename = "id")]
+    pub sub: String,
     pub email: String,
     pub verified_email: bool,
     pub name: String,
@@ -16,7 +34,7 @@ impl GoogleUser {
     pub fn to_btree_map(&self) -> BTreeMap<&str, &str> {
         let mut map = BTreeMap::new();
 
-        map.insert("id", self.id.as_str());
+        map.insert("sub", self.sub.as_str());
         map.insert("email", self.email.as_str());
         map.insert("name", self.name.as_str());
         map.insert("given_name", self.given_name.as_str());
