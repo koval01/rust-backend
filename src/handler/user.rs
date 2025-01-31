@@ -1,5 +1,5 @@
 use axum::{
-    extract::Path,
+    extract::{Path, rejection::PathRejection},
     response::IntoResponse,
     http::StatusCode,
     Json,
@@ -15,6 +15,7 @@ use crate::{
     Extension,
     cache_db_query
 };
+
 use bb8_redis::{bb8::Pool, RedisConnectionManager};
 use moka::future::Cache;
 
@@ -63,13 +64,14 @@ pub async fn user_handler_get(
 /// Handles GET requests for a user by ID
 pub async fn user_id_handler_get(
     _: GoogleUser,
-    Path(id): Path<uuid::Uuid>,
+    id: Result<Path<uuid::Uuid>, PathRejection>,
     Extension(redis_pool): Extension<Pool<RedisConnectionManager>>,
     Extension(moka_cache): Extension<Cache<String, String>>,
     db: Database
 ) -> Result<impl IntoResponse, ApiError> {
     let cache = CacheWrapper::<user::Data>::new(redis_pool, moka_cache, 600);
 
+    let Path(id) = id?;
     // Attempt to fetch the user from cache or database
     let user = get_user!(cache, db, id.to_string())?;
 

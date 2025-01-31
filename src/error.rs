@@ -1,10 +1,10 @@
 use axum::{
     http::StatusCode,
-    response::IntoResponse,
+    response::{IntoResponse, Response},
     extract::rejection::QueryRejection,
     Json,
 };
-
+use axum::extract::rejection::PathRejection;
 use bb8::RunError;
 use prisma_client_rust::QueryError;
 use redis::RedisError;
@@ -87,8 +87,15 @@ impl From<QueryRejection> for ApiError {
     }
 }
 
+impl From<PathRejection> for ApiError {
+    fn from(error: PathRejection) -> Self {
+        debug!("{:#?}", error);
+        ApiError::Custom(StatusCode::BAD_REQUEST, error.body_text())
+    }
+}
+
 impl IntoResponse for ApiError {
-    fn into_response(self) -> axum::response::Response {
+    fn into_response(self) -> Response {
         let status = self.status_code();
         let message = self.message();
         let response = ApiResponse::<()>::error(&message, status);
