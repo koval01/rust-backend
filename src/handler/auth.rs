@@ -112,13 +112,13 @@ pub async fn callback(
                 })?;
 
             let cache = CacheWrapper::<user::Data>::new(redis_pool.clone(), moka_cache, 30);
-            let redis_key = format!("user:{}", g_user.id.to_string());
+            let redis_key = format!("user:{}", g_user.sub.to_string());
 
             let cached_result = cache_db_query!(
                 cache,
                 &redis_key,
                 db.user()
-                    .find_first(vec![user::google_id::equals(g_user.id.clone())])
+                    .find_first(vec![user::google_id::equals(g_user.sub.clone())])
                     .exec()
                     .await,
                 @raw
@@ -127,13 +127,13 @@ pub async fn callback(
             let _ = match cached_result {
                 Ok(existing_user) => Ok(existing_user),
                 Err(CacheError::NotFound) => {
-                    info!("Creating user {} in database", &g_user.id);
+                    info!("Creating user {} in database", &g_user.sub);
                     
                     // Create new user if not found
                     let new_user = db
                         .user()
                         .create(
-                            g_user.id.to_string(),
+                            g_user.sub.to_string(),
                             g_user.given_name.to_string(),
                             vec![
                                 user::photo_url::set(g_user.picture.clone()),
@@ -142,7 +142,7 @@ pub async fn callback(
                         .exec()
                         .await
                         .map_err(|e| { 
-                            error!("Failed to create user {} in database. {:?}", &g_user.id, &e);
+                            error!("Failed to create user {} in database. {:?}", &g_user.sub, &e);
                             ApiError::Database(e) 
                         })?;
 
@@ -151,15 +151,15 @@ pub async fn callback(
                     Ok(new_user)
                 }
                 Err(e) => { 
-                    error!("Error fetching user {} from database. {:?}", &g_user.id, &e);
+                    error!("Error fetching user {} from database. {:?}", &g_user.sub, &e);
                     Err(ApiError::from(e)) 
                 }
             };
-
+            
             let user_map = g_user.to_btree_map();
             let token = jwt_key.sign(&user_map)
                 .map_err(|e| { 
-                    error!("Failed to create a jwt token for user {}. {:?}", &g_user.id, &e);
+                    error!("Failed to create a jwt token for user {}. {:?}", &g_user.sub, &e);
                     ApiError::Custom(StatusCode::INTERNAL_SERVER_ERROR, String::from("Failed to create a jwt token")) 
                 })?;
             let response = ApiResponse::success(json!({"jwt": token}));
