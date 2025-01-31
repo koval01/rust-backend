@@ -10,20 +10,25 @@ use oauth_axum::{
 };
 use axum_extra::extract::Host;
 
+use moka::future::Cache;
 use bb8::Pool;
 use bb8_redis::RedisConnectionManager;
 use redis::{AsyncCommands, RedisError};
 
 use reqwest::header::AUTHORIZATION;
 use serde_json::json;
-use std::env;
+
+use std::{env, sync::Arc};
+use tracing::{debug, error, info};
 
 use crate::{
+    cache_db_query,
     error::ApiError,
+    model::GoogleUser, 
+    extractor::JwtKey,
     response::ApiResponse,
-    util::cache::CacheError,
-    model::GoogleUser,
-    extractor::JwtKey
+    prisma::{PrismaClient, user},
+    util::cache::{CacheError, CacheWrapper}
 };
 
 #[derive(Clone, serde::Deserialize)]
@@ -73,10 +78,12 @@ pub async fn login(
 }
 
 pub async fn callback(
-    Extension(redis_pool): Extension<Pool<RedisConnectionManager>>,
     Query(queries): Query<QueryAxumCallback>,
     Host(hostname): Host,
     Extension(jwt_key): Extension<JwtKey>,
+    Extension(db): Extension<Arc<PrismaClient>>,
+    Extension(moka_cache): Extension<Cache<String, String>>,
+    Extension(redis_pool): Extension<Pool<RedisConnectionManager>>,
 ) -> Result<impl IntoResponse, ApiError> {
     let mut conn = redis_pool.get().await.map_err(CacheError::from)?;
     let item = conn.get::<_, Option<String>>(queries.state.clone()).await.map_err(RedisError::from)?;
@@ -88,24 +95,78 @@ pub async fn callback(
 
     match token_result {
         Ok(token) => {
+            let _: Result<(), _> = conn.del(queries.state).await;
+
             let client = reqwest::Client::new();
             let g_user = client.get("https://www.googleapis.com/oauth2/v1/userinfo")
                 .header(AUTHORIZATION, format!("Bearer {}", token))
                 .send()
-                .await.map_err(|e| ApiError::Custom(StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
+                .await.map_err(|e| { 
+                    error!("Failed to query the google server to retrieve user data: {:?}", e);
+                    ApiError::Custom(StatusCode::INTERNAL_SERVER_ERROR, String::from("Failed to query the google server to retrieve user data")) 
+                })?
                 .json::<GoogleUser>()
-                .await.map_err(|e| ApiError::Custom(StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+                .await.map_err(|e| {
+                    error!("Failed to decode google userinfo: {}", e);
+                    ApiError::Custom(StatusCode::INTERNAL_SERVER_ERROR, String::from("Failed to decode google userinfo")) 
+                })?;
 
-            // delete after get userinfo
-            let _: Result<(), _> = conn.del(queries.state).await;
+            let cache = CacheWrapper::<user::Data>::new(redis_pool.clone(), moka_cache, 30);
+            let redis_key = format!("user:{}", g_user.id.to_string());
+
+            let cached_result = cache_db_query!(
+                cache,
+                &redis_key,
+                db.user()
+                    .find_first(vec![user::google_id::equals(g_user.id.clone())])
+                    .exec()
+                    .await,
+                @raw
+            );
+
+            let _ = match cached_result {
+                Ok(existing_user) => Ok(existing_user),
+                Err(CacheError::NotFound) => {
+                    info!("Creating user {} in database", &g_user.id);
+                    
+                    // Create new user if not found
+                    let new_user = db
+                        .user()
+                        .create(
+                            g_user.id.to_string(),
+                            g_user.given_name.to_string(),
+                            vec![
+                                user::photo_url::set(g_user.picture.clone()),
+                            ]
+                        )
+                        .exec()
+                        .await
+                        .map_err(|e| { 
+                            error!("Failed to create user {} in database. {:?}", &g_user.id, &e);
+                            ApiError::Database(e) 
+                        })?;
+
+                    // Cache the new user
+                    let _ = cache.set(&redis_key, &new_user).await;
+                    Ok(new_user)
+                }
+                Err(e) => { 
+                    error!("Error fetching user {} from database. {:?}", &g_user.id, &e);
+                    Err(ApiError::from(e)) 
+                }
+            };
 
             let user_map = g_user.to_btree_map();
             let token = jwt_key.sign(&user_map)
-                .map_err(|e| ApiError::Custom(StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+                .map_err(|e| { 
+                    error!("Failed to create a jwt token for user {}. {:?}", &g_user.id, &e);
+                    ApiError::Custom(StatusCode::INTERNAL_SERVER_ERROR, String::from("Failed to create a jwt token")) 
+                })?;
             let response = ApiResponse::success(json!({"jwt": token}));
             Ok((StatusCode::OK, Json(response)))
         }
         Err(_) => {
+            debug!("An error occurred while processing the google authorization token.");
             Err(ApiError::BadRequest)
         }
     }
