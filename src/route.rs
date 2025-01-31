@@ -10,9 +10,9 @@ use crate::{
     handler::{
         health_checker_handler,
         login, callback,
-        // user_handler_get,
-        // user_id_handler_get,
-        // lesson_handler_get
+        user_handler_get,
+        user_id_handler_get,
+        lesson_handler_get
     },
     error::ApiError,
 };
@@ -37,18 +37,18 @@ pub fn create_router() -> Router {
 
     // Routes with middleware
     let protected_routes = Router::new()
-    //     .route(
-    //         "/api/v1/user",
-    //         get(user_handler_get)
-    //     )
-    //     .route(
-    //         "/api/v1/user/{id}",
-    //         get(user_id_handler_get)
-    //     )
-    //     .route(
-    //         "/api/v1/lesson",
-    //         get(lesson_handler_get)
-    //     )
+        .route(
+            "/api/v1/user",
+            get(user_handler_get)
+        )
+        .route(
+            "/api/v1/user/{id}",
+            get(user_id_handler_get)
+        )
+        .route(
+            "/api/v1/lesson",
+            get(lesson_handler_get)
+        )
         .layer(
             protected_middlewares
         );

@@ -8,11 +8,10 @@ use std::sync::Arc;
 
 use crate::{
     error::ApiError,
-    model::User,
+    model::GoogleUser,
     prisma::*,
     response::{ApiResponse, UserResponseData},
     util::cache::CacheWrapper,
-    extractor::InitData,
     Extension,
     cache_db_query
 };
@@ -27,7 +26,7 @@ macro_rules! get_user {
             $cache,
             &format!("user:{}", $id),
             $db.user()
-                .find_first(vec![user::id::equals($id)])
+                .find_first(vec![user::google_id::equals($id)])
                 .exec()
                 .await,
             |_| ApiError::NotFound("User does not exist".to_string())
@@ -37,13 +36,12 @@ macro_rules! get_user {
 
 /// Handles GET requests for the authenticated user's profile
 pub async fn user_handler_get(
-    InitData(user): InitData<User>,
+    user: GoogleUser,
     Extension(redis_pool): Extension<Pool<RedisConnectionManager>>,
     Extension(moka_cache): Extension<Cache<String, String>>,
     db: Database
 ) -> Result<impl IntoResponse, ApiError> {
-    let user_data = UserResponseData { user };
-    let user_id = user_data.user.id;
+    let user_id = user.sub;
     let cache = CacheWrapper::<user::Data>::new(redis_pool, moka_cache, 600);
 
     // Attempt to fetch the user from cache or database
@@ -55,6 +53,7 @@ pub async fn user_handler_get(
 
 /// Handles GET requests for a user by ID
 pub async fn user_id_handler_get(
+    _: GoogleUser,
     Path(id): Path<i64>,
     Extension(redis_pool): Extension<Pool<RedisConnectionManager>>,
     Extension(moka_cache): Extension<Cache<String, String>>,
@@ -63,7 +62,7 @@ pub async fn user_id_handler_get(
     let cache = CacheWrapper::<user::Data>::new(redis_pool, moka_cache, 600);
 
     // Attempt to fetch the user from cache or database
-    let user = get_user!(cache, db, id)?;
+    let user = get_user!(cache, db, id.to_string())?;
 
     let response = ApiResponse::success(user);
     Ok((StatusCode::OK, Json(response)))
