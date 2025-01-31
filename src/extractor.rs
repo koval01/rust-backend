@@ -55,7 +55,7 @@ where
             .verify(token)
             .map_err(|e| ApiError::Custom(StatusCode::UNAUTHORIZED, format!("Invalid token: {}", e)))?;
 
-        let id = claims
+        let sub = claims
             .get("sub")
             .ok_or(ApiError::Custom(StatusCode::UNAUTHORIZED, "Missing sub claim".into()))?
             .to_owned();
@@ -87,7 +87,7 @@ where
         let picture = claims.get("picture").map(|s| s.to_owned());
 
         Ok(GoogleUser {
-            id,
+            sub,
             email,
             verified_email,
             name,
