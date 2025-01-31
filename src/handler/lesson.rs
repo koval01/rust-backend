@@ -16,16 +16,15 @@ use crate::prisma;
 use crate::{
     service::llm,
     error::ApiError,
-    extractor::InitData,
     prisma::PrismaClient,
-    model::{Lesson, User, DataWithUserLessonId},
+    model::{Lesson, DataWithUserLessonId, GoogleUser},
     response::{ApiResponse, LessonQuery}
 };
 
 type Database = Extension<Arc<PrismaClient>>;
 
 pub async fn lesson_handler_get(
-    InitData(user): InitData<User>,
+    user: GoogleUser,
     db: Database,
     params: Result<Query<LessonQuery>, axum::extract::rejection::QueryRejection>,
     Extension(gemini_client): Extension<llm::LanguageLearningClient>
@@ -74,15 +73,15 @@ pub async fn lesson_handler_get(
         FROM selected_lesson l
         JOIN insert_user_lesson ul ON l.id = ul."lessonId";
         "#,
-        PrismaValue::Int(user.id),
+        PrismaValue::String(user.sub.to_string()),
         PrismaValue::Enum(format!("{:?}", params.target_language)),
         PrismaValue::Enum(format!("{:?}", params.source_language)),
         PrismaValue::Enum(format!("{:?}", params.level)),
-        PrismaValue::Int(user.id),
+        PrismaValue::String(user.sub.to_string()),
         PrismaValue::Enum(format!("{:?}", params.target_language)),
         PrismaValue::Enum(format!("{:?}", params.source_language)),
         PrismaValue::Enum(format!("{:?}", params.level)),
-        PrismaValue::Int(user.id)
+        PrismaValue::String(user.sub.to_string())
         ))
         .exec()
         .await?;
@@ -152,7 +151,7 @@ pub async fn lesson_handler_get(
             client
                 .user_lesson()
                 .create(
-                    prisma::user::id::equals(user.id),
+                    prisma::user::id::equals(user.sub.to_string()),
                     prisma::lesson::id::equals(String::from(&new_lesson.id)),
                     vec![]
                 )
