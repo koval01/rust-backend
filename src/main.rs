@@ -39,7 +39,7 @@ use tower_http::{
 use sentry::{ClientOptions, IntoDsn};
 use sentry_tower::NewSentryLayer;
 use tracing::info;
-
+use tracing_subscriber::{fmt, EnvFilter};
 use crate::{
     service::llm::LanguageLearningClient,
     extractor::JwtKey
@@ -67,7 +67,15 @@ async fn initialize_prisma_with_retries(max_retries: u32) -> Arc<PrismaClient> {
 
 #[tokio::main]
 async fn main() {
-    tracing_subscriber::fmt::init();
+    tracing_subscriber::fmt()
+        .with_env_filter(
+            EnvFilter::builder()
+                .with_default_directive(tracing::Level::INFO.into())
+                .parse("duolang::middleware=debug")
+                .unwrap()
+        )
+        .with_span_events(fmt::format::FmtSpan::CLOSE)
+        .init();
 
     let _dsn = env::var("SENTRY_DSN").unwrap_or_else(|_| "".to_string());
     let _guard = sentry::init((
