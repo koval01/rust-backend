@@ -29,15 +29,17 @@ enum Role {
 }
 
 model User {
-  id          String       @id @default(uuid()) @db.Uuid
-  googleId    String       @db.VarChar(32)
-  displayName String       @db.VarChar(255)
-  role        Role         @default(USER)
-  photoUrl    String?      @db.VarChar(2048)
-  visible     Boolean      @default(true)
-  createdAt   DateTime     @default(now())
-  userLessons UserLesson[]
-  userStats   UserStats?
+  id             String       @id @default(uuid()) @db.Uuid
+  googleId       String       @db.VarChar(32)
+  displayName    String       @db.VarChar(255)
+  email          String       @db.VarChar(255)
+  verified_email Boolean      @default(false)
+  role           Role         @default(USER)
+  photoUrl       String?      @db.VarChar(2048)
+  visible        Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+  userLessons    UserLesson[]
+  userStats      UserStats?
 
   @@index([googleId])
   @@index([id])

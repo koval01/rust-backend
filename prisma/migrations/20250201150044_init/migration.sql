@@ -12,6 +12,8 @@ CREATE TABLE "User" (
     "id" UUID NOT NULL,
     "googleId" VARCHAR(32) NOT NULL,
     "displayName" VARCHAR(255) NOT NULL,
+    "email" VARCHAR(255) NOT NULL,
+    "verified_email" BOOLEAN NOT NULL DEFAULT false,
     "role" "Role" NOT NULL DEFAULT 'USER',
     "photoUrl" VARCHAR(2048),
     "visible" BOOLEAN NOT NULL DEFAULT true,
