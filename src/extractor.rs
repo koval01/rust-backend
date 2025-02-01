@@ -3,8 +3,16 @@ use jwt::{Error as JwtError, SignWithKey, VerifyWithKey};
 use sha2::Sha256;
 use std::collections::BTreeMap;
 
-use axum::{extract::FromRequestParts, http::request::Parts, Extension, RequestPartsExt};
+use axum::{
+    extract::FromRequestParts, 
+    http::request::Parts, 
+    Extension, RequestPartsExt
+};
+
+use chrono::Utc;
 use reqwest::StatusCode;
+use serde_json::Value;
+
 use crate::{
     error::ApiError,
     model::GoogleUser
@@ -20,11 +28,11 @@ impl JwtKey {
             .map_err(|_| JwtError::InvalidSignature)
     }
 
-    pub fn sign(&self, claims: &BTreeMap<&str, &str>) -> Result<String, JwtError> {
+    pub fn sign(&self, claims: &BTreeMap<&str, Value>) -> Result<String, JwtError> {
         claims.sign_with_key(&self.0)
     }
 
-    pub fn verify(&self, token: &str) -> Result<BTreeMap<String, String>, JwtError> {
+    pub fn verify(&self, token: &str) -> Result<BTreeMap<String, Value>, JwtError> {
         token.verify_with_key(&self.0)
     }
 }
@@ -51,40 +59,59 @@ where
             .strip_prefix("Bearer ")
             .ok_or(ApiError::Custom(StatusCode::UNAUTHORIZED, "Invalid token format".into()))?;
 
-        let claims: BTreeMap<String, String> = jwt_key
+        let claims: BTreeMap<String, Value> = jwt_key
             .verify(token)
             .map_err(|e| ApiError::Custom(StatusCode::UNAUTHORIZED, format!("Invalid token: {}", e)))?;
 
         let sub = claims
             .get("sub")
+            .and_then(Value::as_str)
             .ok_or(ApiError::Custom(StatusCode::UNAUTHORIZED, "Missing sub claim".into()))?
             .to_owned();
 
+        let expiry = claims
+            .get("expiry")
+            .and_then(Value::as_i64)
+            .ok_or(ApiError::Custom(StatusCode::UNAUTHORIZED, "Missing or invalid expiry claim".into()))?;
+
+        if Utc::now().timestamp() > expiry {
+            return Err(ApiError::Custom(StatusCode::UNAUTHORIZED, "Token expired".into()));
+        }
+
+        let expiry = Some(expiry);
+
         let email = claims
             .get("email")
+            .and_then(Value::as_str)
             .ok_or(ApiError::Custom(StatusCode::UNAUTHORIZED, "Missing email claim".into()))?
             .to_owned();
 
         let verified_email = claims
             .get("email_verified")
-            .map(|v| v == "true")
+            .and_then(Value::as_bool)
             .unwrap_or(false);
 
         let name = claims
             .get("name")
+            .and_then(Value::as_str)
             .ok_or(ApiError::Custom(StatusCode::UNAUTHORIZED, "Missing name claim".into()))?
             .to_owned();
 
         let given_name = claims
             .get("given_name")
+            .and_then(Value::as_str)
             .ok_or(ApiError::Custom(StatusCode::UNAUTHORIZED, "Missing given_name claim".into()))?
             .to_owned();
 
         let family_name = claims
             .get("family_name")
-            .map(|s| s.to_owned());
+            .and_then(Value::as_str)
+            .map(ToOwned::to_owned);
 
-        let picture = claims.get("picture").map(|s| s.to_owned());
+        let picture = claims
+            .get("picture")
+            .and_then(Value::as_str)
+            .map(ToOwned::to_owned);
 
         Ok(GoogleUser {
             sub,
@@ -94,6 +121,7 @@ where
             given_name,
             family_name,
             picture,
+            expiry
         })
     }
 }
