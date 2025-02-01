@@ -19,6 +19,7 @@ use reqwest::header::AUTHORIZATION;
 use serde_json::json;
 
 use std::{env, sync::Arc};
+use chrono::Utc;
 use tracing::{debug, error, info};
 
 use crate::{
@@ -98,7 +99,7 @@ pub async fn callback(
             let _: Result<(), _> = conn.del(queries.state).await;
 
             let client = reqwest::Client::new();
-            let g_user = client.get("https://www.googleapis.com/oauth2/v1/userinfo")
+            let mut g_user = client.get("https://www.googleapis.com/oauth2/v1/userinfo")
                 .header(AUTHORIZATION, format!("Bearer {}", token))
                 .send()
                 .await.map_err(|e| { 
@@ -110,6 +111,8 @@ pub async fn callback(
                     error!("Failed to decode google userinfo: {}", e);
                     ApiError::Custom(StatusCode::INTERNAL_SERVER_ERROR, String::from("Failed to decode google userinfo")) 
                 })?;
+            
+            g_user.expiry = Some(Utc::now().timestamp() + 28800);
 
             let cache = CacheWrapper::<user::Data>::new(redis_pool.clone(), moka_cache, 30);
             let redis_key = format!("user:{}", g_user.sub.to_string());

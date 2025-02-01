@@ -1,5 +1,6 @@
 use std::collections::BTreeMap;
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
@@ -28,22 +29,26 @@ pub struct GoogleUser {
     pub given_name: String,
     pub family_name: Option<String>,
     pub picture: Option<String>,
+    pub expiry: Option<i64>
 }
 
 impl GoogleUser {
-    pub fn to_btree_map(&self) -> BTreeMap<&str, &str> {
+    pub fn to_btree_map(&self) -> BTreeMap<&str, Value> {
         let mut map = BTreeMap::new();
 
-        map.insert("sub", self.sub.as_str());
-        map.insert("email", self.email.as_str());
-        map.insert("name", self.name.as_str());
-        map.insert("given_name", self.given_name.as_str());
+        map.insert("sub", Value::String(self.sub.clone()));
+        map.insert("email", Value::String(self.email.clone()));
+        map.insert("name", Value::String(self.name.clone()));
+        map.insert("given_name", Value::String(self.given_name.clone()));
 
         if let Some(ref family_name) = self.family_name {
-            map.insert("family_name", family_name.as_str());
+            map.insert("family_name", Value::String(family_name.clone()));
         }
         if let Some(ref picture) = self.picture {
-            map.insert("picture", picture.as_str());
+            map.insert("picture", Value::String(picture.clone()));
+        }
+        if let Some(expiry) = self.expiry {
+            map.insert("expiry", Value::Number(serde_json::Number::from(expiry)));
         }
 
         map
