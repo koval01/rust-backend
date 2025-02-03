@@ -70,16 +70,20 @@ jobs:
 
       - name: Test Docker image
         env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
           REDIS_URL: ${{ secrets.REDIS_URL }}
-          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
         run: |
           docker run -d --name test-container \
-            -e GEMINI_API_KEY="${GEMINI_API_KEY}" \
             -e DATABASE_URL="${DATABASE_URL}" \
+            -e GEMINI_API_KEY="${GEMINI_API_KEY}" \
+            -e GOOGLE_CLIENT_ID="${GOOGLE_CLIENT_ID}" \
+            -e GOOGLE_CLIENT_SECRET="${GOOGLE_CLIENT_SECRET}" \
+            -e JWT_SECRET="${JWT_SECRET}" \
             -e REDIS_URL="${REDIS_URL}" \
-            -e BOT_TOKEN="${BOT_TOKEN}" \
             -p 8000:8000 \
             ${{ env.DOCKER_IMAGE }}:test
           
