@@ -8,18 +8,17 @@ use serde::{de::DeserializeOwned, Serialize};
 use serde_json::{to_string, from_str};
 
 use moka::future::Cache;
-use prisma_client_rust::QueryError;
-
-use crate::error::ApiError;
+use reqwest::{Client, Error as ReqwestError};
 
 use std::time::Duration;
 use std::future::Future;
 
 #[derive(Debug)]
 pub enum CacheError {
-    Redis(RunError<RedisError>), // Error related to Redis connection or operations
-    Query(QueryError),           // Error related to database queries
-    NotFound,                    // Error indicating that the data was not found
+    Redis(RunError<RedisError>),      // Error related to Redis connection or operations
+    Reqwest(ReqwestError),            // Error related to HTTP requests
+    Serialization(serde_json::Error), // Error related to JSON serialization/deserialization
+    NotFound,                         // Error indicating that the data was not found
 }
 
 // Implement conversion from Redis errors to CacheError
@@ -29,21 +28,17 @@ impl From<RunError<RedisError>> for CacheError {
     }
 }
 
-// Implement conversion from QueryError (database error) to CacheError
-impl From<QueryError> for CacheError {
-    fn from(err: QueryError) -> Self {
-        CacheError::Query(err)
+// Implement conversion from Reqwest errors to CacheError
+impl From<ReqwestError> for CacheError {
+    fn from(err: ReqwestError) -> Self {
+        CacheError::Reqwest(err)
     }
 }
 
-// Convert CacheError into ApiError for unified error handling in the API layer
-impl From<CacheError> for ApiError {
-    fn from(err: CacheError) -> Self {
-        match err {
-            CacheError::Query(e) => ApiError::from(e), // Convert database errors
-            CacheError::Redis(e) => ApiError::Redis(e), // Convert Redis errors
-            CacheError::NotFound => ApiError::NotFound("Data not found".to_string()), // Convert not found errors
-        }
+// Implement conversion from JSON errors to CacheError
+impl From<serde_json::Error> for CacheError {
+    fn from(err: serde_json::Error) -> Self {
+        CacheError::Serialization(err)
     }
 }
 
@@ -51,6 +46,7 @@ pub struct CacheWrapper<T> {
     redis_pool: Pool<RedisConnectionManager>,   // Redis connection pool
     moka_cache: Cache<String, String>,          // Moka in-memory cache
     cache_ttl: Duration,                        // Time-to-live for Redis cache
+    http_client: Client,                        // Reqwest HTTP client
     _phantom: std::marker::PhantomData<T>,      // Marker for generic type T
 }
 
@@ -64,25 +60,34 @@ where
         redis_pool: Pool<RedisConnectionManager>,
         moka_cache: Cache<String, String>,
         cache_ttl_secs: u64,
+        http_client: Client,
     ) -> Self {
         Self {
             redis_pool,
             moka_cache,
             cache_ttl: Duration::from_secs(cache_ttl_secs),
+            http_client,
             _phantom: std::marker::PhantomData,
         }
     }
 
-    /// Attempts to retrieve the value from Moka, Redis, or database (via `db_fetch`).
-    pub async fn get_or_set<F>(
+    /// Get the HTTP client
+    #[allow(dead_code)]
+    pub fn client(&self) -> &Client {
+        &self.http_client
+    }
+
+    /// Attempts to retrieve the value from Moka, Redis, or HTTP (via `http_fetch`).
+    pub async fn get_or_fetch<F, Fut>(
         &self,
         key: &str,
-        db_fetch: F,
+        http_fetch: F,
     ) -> Result<T, CacheError>
     where
-        F: Future<Output = Result<Option<T>, QueryError>>, // A future that fetches data from the database
+        F: FnOnce(Client) -> Fut,
+        Fut: Future<Output = Result<Option<T>, ReqwestError>> + Send,
     {
-        // Step 1: Check Moka cache
+        // Check Moka cache
         if let Some(cached_value) = self.moka_cache.get(key).await {
             if cached_value == "__not_found__" {
                 return Err(CacheError::NotFound);
@@ -92,7 +97,7 @@ where
             }
         }
 
-        // Step 2: Check Redis cache
+        // Check Redis cache
         let mut conn = self.redis_pool.get().await.map_err(CacheError::from)?;
         if let Ok(Some(cached_data)) = conn.get::<_, Option<String>>(key).await {
             if cached_data == "__not_found__" {
@@ -107,10 +112,12 @@ where
             }
         }
 
-        // Step 3: Fetch from database
-        let db_result = db_fetch.await.map_err(CacheError::from)?;
+        // Fetch from HTTP request
+        // Use clone of the client to avoid lifetime issues
+        let client_clone = self.http_client.clone();
+        let http_result = http_fetch(client_clone).await.map_err(CacheError::from)?;
 
-        if let Some(data) = db_result {
+        if let Some(data) = http_result {
             // Cache the result in both Moka and Redis
             if let Ok(serialized) = to_string(&data) {
                 self.moka_cache.insert(key.to_string(), serialized.clone()).await;
@@ -136,8 +143,9 @@ where
     }
 
     /// Updates the cache with new data for a given key in both Moka and Redis
+    #[allow(dead_code)]
     pub async fn set(&self, key: &str, data: &T) -> Result<(), CacheError> {
-        let serialized = to_string(data).map_err(|_| CacheError::NotFound)?;
+        let serialized = to_string(data).map_err(|e| CacheError::Serialization(e))?;
 
         // Check Moka cache first
         if let Some(cached_value) = self.moka_cache.get(key).await {
@@ -150,7 +158,7 @@ where
         // Update Moka cache
         self.moka_cache.insert(key.to_string(), serialized.clone()).await;
 
-        // Update Redis cache without deleting
+        // Update Redis cache
         let mut conn = self.redis_pool.get().await.map_err(CacheError::from)?;
         let _: Result<(), _> = conn
             .set_ex(key, serialized, self.cache_ttl.as_secs())
@@ -169,18 +177,46 @@ where
     }
 }
 
-// Macro to simplify cache usage in database queries
 #[macro_export]
-macro_rules! cache_db_query {
-    ($cache:expr, $key:expr, $query:expr) => {
-        $cache.get_or_set($key, async { $query }).await.map_err(ApiError::from)
+macro_rules! cache_http_request {
+    ($cache:expr, $key:expr, $request:expr) => {
+        $cache.get_or_fetch($key, |client| {
+            let fut = async move {
+                $request(client).await
+            };
+            fut
+        }).await
     };
 
-    ($cache:expr, $key:expr, $query:expr, $error_handler:expr) => {
-        $cache.get_or_set($key, async { $query }).await.map_err($error_handler)
+    ($cache:expr, $key:expr, $request:expr, $error_handler:expr) => {
+        $cache.get_or_fetch($key, |client| {
+            let fut = async move {
+                $request(client).await
+            };
+            fut
+        }).await.map_err($error_handler)
     };
+}
 
-    ($cache:expr, $key:expr, $query:expr, @raw) => {
-        $cache.get_or_set($key, async { $query }).await
-    };
+pub trait JsonResponseExt {
+    async fn json_cached<T>(self) -> Result<Option<T>, ReqwestError>
+    where
+        T: DeserializeOwned;
+}
+
+impl JsonResponseExt for reqwest::Response {
+    async fn json_cached<T>(self) -> Result<Option<T>, ReqwestError>
+    where
+        T: DeserializeOwned,
+    {
+        if self.status().is_success() {
+            self.json::<T>().await.map(Some)
+        } else if self.status().is_client_error() {
+            // 4xx responses - treat as "not found"
+            Ok(None)
+        } else {
+            // Other errors - propagate
+            self.error_for_status()?.json::<T>().await.map(Some)
+        }
+    }
 }

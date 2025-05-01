@@ -9,10 +9,8 @@ use tower::ServiceBuilder;
 use crate::{
     handler::{
         health_checker_handler,
-        login, callback,
-        user_handler_get,
+        users_handler_get,
         user_id_handler_get,
-        lesson_handler_get
     },
     error::ApiError,
 };
@@ -23,9 +21,7 @@ use crate::middleware::timestamp_guard_middleware;
 pub fn create_router() -> Router {
     // Routes without middleware
     let public_routes = Router::new()
-        .route("/api/v1/health", get(health_checker_handler))
-        .route("/api/v1/auth/login", get(login))
-        .route("/api/v1/auth/callback", get(callback));
+        .route("/health", get(health_checker_handler));
     
     let protected_middlewares = ServiceBuilder::new();
 
@@ -38,16 +34,12 @@ pub fn create_router() -> Router {
     // Routes with middleware
     let protected_routes = Router::new()
         .route(
-            "/api/v1/user",
-            get(user_handler_get)
+            "/v1/users",
+            get(users_handler_get)
         )
         .route(
-            "/api/v1/user/{id}",
+            "/v1/user/{id}",
             get(user_id_handler_get)
-        )
-        .route(
-            "/api/v1/lesson",
-            get(lesson_handler_get)
         )
         .layer(
             protected_middlewares

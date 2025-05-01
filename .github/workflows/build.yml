@@ -8,7 +8,7 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
-  DOCKER_IMAGE: koval01/duolang
+  DOCKER_IMAGE: koval01/rust-backend
 
 permissions:
   contents: read
@@ -39,26 +39,16 @@ jobs:
         with:
           prefix-key: x86_64-unknown-linux-gnu
 
-      - name: Generate Prisma Client
-        run: |
-          cargo prisma generate
-
       - name: Build Release Binary
         run: cargo build --release
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Get version info
-        id: vars
-        run: |
-          echo "build_date=$(date +'%Y.%m.%d')" >> $GITHUB_OUTPUT
-          echo "short_sha=${GITHUB_SHA::8}" >> $GITHUB_OUTPUT
-
       - name: Prepare binaries for Docker
         run: |
           mkdir -p docker-files
-          cp target/release/duolang docker-files/
+          cp target/release/rust-backend docker-files/
 
       - name: Build Docker image for testing
         uses: docker/build-push-action@v5
@@ -70,26 +60,16 @@ jobs:
 
       - name: Test Docker image
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
-          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
-          JWT_SECRET: ${{ secrets.JWT_SECRET }}
           REDIS_URL: ${{ secrets.REDIS_URL }}
         run: |
           docker run -d --name test-container \
-            -e DATABASE_URL="${DATABASE_URL}" \
-            -e GEMINI_API_KEY="${GEMINI_API_KEY}" \
-            -e GOOGLE_CLIENT_ID="${GOOGLE_CLIENT_ID}" \
-            -e GOOGLE_CLIENT_SECRET="${GOOGLE_CLIENT_SECRET}" \
-            -e JWT_SECRET="${JWT_SECRET}" \
             -e REDIS_URL="${REDIS_URL}" \
             -p 8000:8000 \
             ${{ env.DOCKER_IMAGE }}:test
           
           sleep 20
 
-          docker exec test-container curl -f http://localhost:8000/api/v1/health || exit 1
+          docker exec test-container curl -f http://localhost:8000/health || exit 1
           docker stop test-container
           docker rm test-container
 
@@ -108,4 +88,3 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: |
             ${{ env.DOCKER_IMAGE }}:latest
-            ${{ env.DOCKER_IMAGE }}:${{ steps.vars.outputs.build_date }}-${{ steps.vars.outputs.short_sha }}

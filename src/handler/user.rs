@@ -3,77 +3,81 @@ use axum::{
     response::IntoResponse,
     http::StatusCode,
     Json,
-};
-use std::sync::Arc;
-
-use crate::{
-    error::ApiError,
-    model::GoogleUser,
-    prisma::*,
-    response::ApiResponse,
-    util::cache::CacheWrapper,
     Extension,
-    cache_db_query
 };
 
 use bb8_redis::{bb8::Pool, RedisConnectionManager};
 use moka::future::Cache;
+use reqwest::Client;
 
-type Database = Extension<Arc<PrismaClient>>;
+use crate::{
+    error::ApiError,
+    response::ApiResponse,
+    util::cache::{CacheWrapper, JsonResponseExt},
+    cache_http_request,
+};
+use crate::model::User;
 
-macro_rules! get_user {
-    ($cache:expr, $db:expr, $id:expr, @google_id) => {
-        get_user_internal!($cache, $db, $id, user::google_id::equals($id))
-    };
-    ($cache:expr, $db:expr, $id:expr) => {
-        get_user_internal!($cache, $db, $id, user::id::equals($id))
-    };
-}
-
-macro_rules! get_user_internal {
-    ($cache:expr, $db:expr, $id:expr, $condition:expr) => {
-        cache_db_query!(
-            $cache,
-            &format!("user:{}", $id),
-            $db.user()
-                .find_first(vec![$condition])
-                .exec()
-                .await,
-            |_| ApiError::NotFound("User does not exist".to_string())
-        )
-    };
-}
-
-/// Handles GET requests for the authenticated user's profile
-pub async fn user_handler_get(
-    user: GoogleUser,
+/// Handles GET requests for all users from JSONPlaceholder
+pub async fn users_handler_get(
     Extension(redis_pool): Extension<Pool<RedisConnectionManager>>,
     Extension(moka_cache): Extension<Cache<String, String>>,
-    db: Database
+    Extension(http_client): Extension<Client>,
 ) -> Result<impl IntoResponse, ApiError> {
-    let user_id = user.sub;
-    let cache = CacheWrapper::<user::Data>::new(redis_pool, moka_cache, 600);
+    // Create a cache wrapper for User vector
+    let cache = CacheWrapper::<Vec<User>>::new(
+        redis_pool,
+        moka_cache,
+        10,
+        http_client,
+    );
 
-    // Attempt to fetch the user from cache or database
-    let user = get_user!(cache, db, user_id, @google_id)?;
+    // Attempt to fetch users from cache or JSONPlaceholder API
+    let users = cache_http_request!(
+        cache, 
+        "users:all",
+        |client: Client| async move {
+            client.get("https://jsonplaceholder.typicode.com/users")
+                .send()
+                .await?
+                .json_cached::<Vec<User>>()
+                .await
+        }
+    )?;
 
-    let response = ApiResponse::success(user);
+    let response = ApiResponse::success(users);
     Ok((StatusCode::OK, Json(response)))
 }
 
-/// Handles GET requests for a user by ID
+/// Handles GET requests for a specific user by ID from JSONPlaceholder
 pub async fn user_id_handler_get(
-    _: GoogleUser,
-    id: Result<Path<uuid::Uuid>, PathRejection>,
+    id: Result<Path<i32>, PathRejection>,
     Extension(redis_pool): Extension<Pool<RedisConnectionManager>>,
     Extension(moka_cache): Extension<Cache<String, String>>,
-    db: Database
+    Extension(http_client): Extension<Client>,
 ) -> Result<impl IntoResponse, ApiError> {
-    let cache = CacheWrapper::<user::Data>::new(redis_pool, moka_cache, 600);
+    let Path(id) = id.map_err(|e| ApiError::Conflict(e.to_string()))?;
 
-    let Path(id) = id?;
-    // Attempt to fetch the user from cache or database
-    let user = get_user!(cache, db, id.to_string())?;
+    // Create a cache wrapper for a single User
+    let cache = CacheWrapper::<User>::new(
+        redis_pool,
+        moka_cache,
+        10,
+        http_client,
+    );
+
+    // Attempt to fetch the user from cache or JSONPlaceholder API
+    let user = cache_http_request!(
+        cache, 
+        &format!("user:{}", id),
+        |client: Client| async move {
+            client.get(format!("https://jsonplaceholder.typicode.com/users/{}", id))
+                .send()
+                .await?
+                .json_cached::<User>()
+                .await
+        }
+    )?;
 
     let response = ApiResponse::success(user);
     Ok((StatusCode::OK, Json(response)))

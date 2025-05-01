@@ -1,28 +1,22 @@
 mod route;
 mod middleware;
 mod error;
-mod extractor;
 mod handler;
 mod model;
 mod response;
 mod util;
 
-use moka::future::Cache;
-
 use std::env;
-use std::sync::Arc;
 use std::time::Duration;
 
 use bb8_redis::RedisConnectionManager;
 use bb8_redis::bb8;
 
 use redis::AsyncCommands;
+use moka::future::Cache;
+use reqwest::ClientBuilder;
 
-#[allow(warnings, unused)]
-mod prisma;
 mod service;
-
-use prisma::PrismaClient;
 
 use axum::{
     http::{header::{ACCEPT, CONTENT_TYPE}, HeaderName, HeaderValue, Method},
@@ -38,32 +32,13 @@ use tower_http::{
 
 use sentry::{ClientOptions, IntoDsn};
 use sentry_tower::NewSentryLayer;
+
 use tracing::info;
 use tracing_subscriber::{fmt, EnvFilter};
-use crate::{
-    service::llm::LanguageLearningClient,
-    extractor::JwtKey
-};
+use crate::middleware::{cache_header_middleware, process_time_middleware};
 
 #[allow(warnings, unused)]
 use crate::middleware::request_id_middleware;
-
-async fn initialize_prisma_with_retries(max_retries: u32) -> Arc<PrismaClient> {
-    let mut attempts = 0;
-    loop {
-        match PrismaClient::_builder().build().await {
-            Ok(client) => return Arc::new(client),
-            Err(e) => {
-                attempts += 1;
-                if attempts >= max_retries {
-                    panic!("Failed to initialize Prisma client after {} attempts: {}", max_retries, e);
-                }
-                tracing::error!("Failed to initialize Prisma client (attempt {}/{}): {}", attempts, max_retries, e);
-                tokio::time::sleep(Duration::from_secs(1)).await;
-            }
-        }
-    }
-}
 
 #[tokio::main]
 async fn main() {
@@ -71,7 +46,7 @@ async fn main() {
         .with_env_filter(
             EnvFilter::builder()
                 .with_default_directive(tracing::Level::INFO.into())
-                .parse("duolang::middleware=debug")
+                .parse("rust-backend::middleware=debug")
                 .unwrap()
         )
         .with_span_events(fmt::format::FmtSpan::CLOSE)
@@ -96,17 +71,12 @@ async fn main() {
         .allow_headers([
             ACCEPT,
             CONTENT_TYPE,
-            HeaderName::from_static("x-initdata"),
             HeaderName::from_static("x-timestamp"),
         ]);
 
-    let jwt_secret = env::var("JWT_SECRET").expect("JWT_SECRET must be set");
-    let jwt_key = JwtKey::new(jwt_secret.as_bytes())
-        .expect("Failed to create JWT key");
-
     let moka_cache: Cache<String, String> = Cache::builder()
-        .time_to_live(Duration::from_secs(60))
-        .max_capacity(32_000)
+        .time_to_live(Duration::from_secs(10))
+        .max_capacity(16_000)
         .build();
 
     let redis_url = env::var("REDIS_URL").unwrap_or_else(|_| "redis://localhost".to_string());
@@ -126,17 +96,23 @@ async fn main() {
         let _: () = conn.set("health_check", "ok").await.unwrap();
     }
 
-    let prisma_client = initialize_prisma_with_retries(3).await;
-
-    let gemini_client = LanguageLearningClient::new()
-        .await
-        .expect("Failed to create Gemini client");
+    let http_client = ClientBuilder::new()
+        .timeout(Duration::from_secs(30))
+        .connect_timeout(Duration::from_secs(10))
+        .pool_max_idle_per_host(10)
+        .pool_idle_timeout(Duration::from_secs(60))
+        .user_agent(format!("{}/{}", env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION")))
+        .gzip(true)
+        .build()
+        .expect("Failed to create HTTP client");
 
     let middleware_stack = ServiceBuilder::new()
         .layer(NewSentryLayer::new_from_top())
         .layer(TraceLayer::new_for_http())
         .layer(cors)
-        .layer(tower::limit::ConcurrencyLimitLayer::new(1000));
+        .layer(tower::limit::ConcurrencyLimitLayer::new(1000))
+        .layer(axum::middleware::from_fn(process_time_middleware))
+        .layer(axum::middleware::from_fn(cache_header_middleware));
 
     #[cfg(not(debug_assertions))]
     let middleware_stack = middleware_stack
@@ -145,10 +121,8 @@ async fn main() {
     let app = create_router()
         .layer(middleware_stack)
         .layer(Extension(redis_pool))
-        .layer(Extension(prisma_client))
         .layer(Extension(moka_cache))
-        .layer(Extension(gemini_client))
-        .layer(Extension(jwt_key));
+        .layer(Extension(http_client));
 
     let _bind = env::var("SERVER_BIND").unwrap_or_else(|_| "0.0.0.0:8000".to_string());
     let listener = tokio::net::TcpListener::bind(&_bind)

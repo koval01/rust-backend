@@ -1,5 +1,5 @@
 [package]
-name = "duolang"
+name = "rust-backend"
 version = "0.1.0"
 edition = "2021"
 
@@ -12,35 +12,24 @@ strip = true
 debug = false
 
 [dependencies]
-axum = "0.8"
-axum-extra = "0.10"
-oauth-axum = "0.1"
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
-tokio = { version = "1.43", features = ["full"] }
-tower-http = { version = "0.6", features = ["cors", "trace"] }
-hmac = "0.12"
-sha2 = "0.10"
-tower = { version = "0.5", features = ["limit", "buffer", "timeout"] }
-ahash = "0.8"
-bb8 = "0.9"
-bb8-redis = "0.20"
-redis = { version = "0.28", features = ["tokio-comp", "tokio-native-tls-comp"] }
-prisma-client-rust = { git = "https://github.com/koval01/prisma-client-rust", rev = "e29468d6d44419fe96086f486ad586f27bf29769", features = ["postgresql"] }
-prisma-client-rust-cli = { git = "https://github.com/koval01/prisma-client-rust", rev = "e29468d6d44419fe96086f486ad586f27bf29769", features = ["postgresql"] }
-tracing-subscriber = { version = "0.3", features = ["env-filter"] }
-num_cpus = "1.16"
-tracing = "0.1"
-sentry = { version = "0.36", features = ["tracing"] }
-sentry-tower = "0.36"
-uuid = { version = "1.12", features = ["serde", "v4"] }
-chrono = { version = "0.4", features = ["serde"] }
-moka = { version = "0.12", features = ["future"] }
-google-generative-ai-rs = { version = "0.3", features = ["beta"] }
-anyhow = "1.0"
-reqwest = "0.12"
-jwt = "0.16"
+axum = "0.8.3"
+serde = { version = "1.0.219", features = ["derive"] }
+serde_json = "1.0.140"
+tokio = { version = "1.44.2", features = ["full"] }
+tower-http = { version = "0.6.2", features = ["cors", "trace"] }
+tower = { version = "0.5.2", features = ["limit", "buffer", "timeout"] }
+bb8 = "0.9.0"
+bb8-redis = "0.22"
+redis = { version = "0.30", features = ["tokio-comp", "tokio-native-tls-comp"] }
+tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
+num_cpus = "1.16.0"
+tracing = "0.1.41"
+sentry = { version = "0.37.0", features = ["tracing"] }
+sentry-tower = "0.37.0"
+uuid = { version = "1.16.0", features = ["serde", "v4"] }
+chrono = { version = "0.4.41", features = ["serde"] }
+moka = { version = "0.12.10", features = ["future"] }
+reqwest = { version = "0.12.15", features = ["gzip"] }
 
 [dev-dependencies]
-temp-env = "0.3"
-tokio = { version = "1.43", features = ["macros", "rt-multi-thread"] }
+tokio = { version = "1.44.2", features = ["macros", "rt-multi-thread"] }
