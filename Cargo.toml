@@ -24,7 +24,7 @@ redis = { version = "0.30", features = ["tokio-comp", "tokio-native-tls-comp"] }
 tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
 num_cpus = "1.16.0"
 tracing = "0.1.41"
-sentry = { version = "0.37.0", features = ["tracing"] }
+sentry = { version = "0.38.0", features = ["tracing"] }
 sentry-tower = "0.37.0"
 uuid = { version = "1.16.0", features = ["serde", "v4"] }
 chrono = { version = "0.4.41", features = ["serde"] }
