@@ -171,12 +171,12 @@ dependencies = [
 
 [[package]]
 name = "bb8-redis"
-version = "0.22.0"
+version = "0.23.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4f435a7d764ccf6319163f74533073775a1472b341c64662522980d1939ffd87"
+checksum = "b7eea5c48080df5cd6c10bc7fec5a160a7d18dc5cf073ab42b49375aa4c748a6"
 dependencies = [
  "bb8",
- "redis",
+ "redis 0.31.0",
 ]
 
 [[package]]
@@ -1327,6 +1327,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "redis"
+version = "0.31.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0bc1ea653e0b2e097db3ebb5b7f678be339620b8041f66b30a308c1d45d36a7f"
+dependencies = [
+ "bytes",
+ "cfg-if",
+ "combine",
+ "futures-util",
+ "itoa",
+ "num-bigint",
+ "percent-encoding",
+ "pin-project-lite",
+ "ryu",
+ "socket2",
+ "tokio",
+ "tokio-util",
+ "url",
+]
+
+[[package]]
 name = "redox_syscall"
 version = "0.5.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1450,7 +1471,7 @@ dependencies = [
  "chrono",
  "moka",
  "num_cpus",
- "redis",
+ "redis 0.30.0",
  "reqwest",
  "sentry",
  "sentry-tower",
