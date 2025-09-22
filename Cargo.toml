@@ -14,7 +14,7 @@ debug = false
 [dependencies]
 axum = "0.8.3"
 serde = { version = "1.0.219", features = ["derive"] }
-serde_json = "1.0.140"
+serde_json = "1.0.145"
 tokio = { version = "1.44.2", features = ["full"] }
 tower-http = { version = "0.6.2", features = ["cors", "trace"] }
 tower = { version = "0.5.2", features = ["limit", "buffer", "timeout"] }
